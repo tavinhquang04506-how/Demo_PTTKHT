@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi Tiết Phim - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div id="movieDetail">
+        <div class="loading"><div class="spinner"></div><p>Đang tải thông tin phim...</p></div>
+      </div>
+      <div class="section" id="showtimeSection" style="display:none;">
+        <h2 class="section-title">🎟️ Chọn Suất Chiếu</h2>
+        <div id="dateSelector" class="date-selector"></div>
+        <div id="showtimeList"></div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    const movieId = new URLSearchParams(window.location.search).get('id');
+    let selectedDate = null;
+
+    async function loadMovie() {
+      try {
+        if (!movieId) { 
+          document.getElementById('movieDetail').innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Không tìm thấy phim (thiếu ID)</p><a href="/" class="btn btn-primary" style="margin-top:16px;">Về trang chủ</a></div>';
+          return; 
+        }
+        console.log('Loading movie ID:', movieId);
+        const { data: movie, error } = await db.from('phim').select('*').eq('id', movieId).single();
+        console.log('Movie result:', movie, 'Error:', error);
+        if (error || !movie) { 
+          document.getElementById('movieDetail').innerHTML = '<div class="empty-state"><span class="icon">😔</span><p>Không tìm thấy phim</p><a href="/" class="btn btn-primary" style="margin-top:16px;">Về trang chủ</a></div>';
+          return; 
+        }
+
+      document.title = movie.ten_phim + ' - CineTicket';
+      document.getElementById('movieDetail').innerHTML = `
+        <div class="movie-detail">
+          <img src="${movie.poster_url}" alt="${movie.ten_phim}" class="movie-detail-poster" onerror="posterFallback(this)">
+          <div>
+            <h1>${movie.ten_phim}</h1>
+            <div class="movie-meta">
+              <span class="meta-tag">⭐ ${movie.diem_danh_gia}/10</span>
+              <span class="meta-tag">⏱ ${movie.thoi_luong} phút</span>
+              <span class="meta-tag">🌍 ${movie.quoc_gia}</span>
+              <span class="meta-tag">🔞 ${movie.gioi_han_tuoi}</span>
+            </div>
+            <div class="movie-meta">
+              ${(movie.the_loai || '').split(',').map(t => `<span class="genre-pill">${t.trim()}</span>`).join('')}
+            </div>
+            <p style="margin: 16px 0;"><strong>Đạo diễn:</strong> ${movie.dao_dien || 'N/A'}</p>
+            <p style="margin-bottom: 16px;"><strong>Diễn viên:</strong> ${movie.dien_vien || 'N/A'}</p>
+            <p style="color: var(--text-secondary); line-height: 1.8;">${movie.mo_ta || ''}</p>
+            ${movie.trang_thai === 'dang_chieu' ? 
+              `<button class="btn btn-primary btn-lg" style="margin-top: 24px;" onclick="document.getElementById('showtimeSection').scrollIntoView({behavior:'smooth'})">🎟️ Đặt Vé Ngay</button>` :
+              `<button class="btn btn-gold btn-lg" style="margin-top: 24px;" disabled>📅 Sắp chiếu - ${FORMAT_NGAY(movie.ngay_khoi_chieu)}</button>`
+            }
+          </div>
+        </div>
+      `;
+
+      if (movie.trang_thai === 'dang_chieu') {
+        document.getElementById('showtimeSection').style.display = 'block';
+        loadDates();
+      }
+      } catch(e) {
+        console.error('loadMovie error:', e);
+        document.getElementById('movieDetail').innerHTML = '<div class="empty-state"><span class="icon">❌</span><p>Lỗi: ' + e.message + '</p><a href="/" class="btn btn-primary">Về trang chủ</a></div>';
+      }
+    }
+
+    function loadDates() {
+      const container = document.getElementById('dateSelector');
+      const days = ['CN','T2','T3','T4','T5','T6','T7'];
+      let html = '';
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(); d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        html += `<button class="date-btn ${i===0?'active':''}" data-date="${dateStr}" onclick="selectDate('${dateStr}', this)">
+          <span class="day-name">${i===0?'Hôm nay':days[d.getDay()]}</span>
+          <span class="day-num">${d.getDate()}/${d.getMonth()+1}</span>
+        </button>`;
+      }
+      container.innerHTML = html;
+      const today = new Date().toISOString().split('T')[0];
+      selectedDate = today;
+      loadShowtimes(today);
+    }
+
+    function selectDate(date, btn) {
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedDate = date;
+      loadShowtimes(date);
+    }
+
+    async function loadShowtimes(date) {
+      const container = document.getElementById('showtimeList');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      const { data, error } = await db
+        .from('suat_chieu')
+        .select('*, phong_chieu(*, rap(*))')
+        .eq('phim_id', movieId)
+        .eq('ngay_chieu', date)
+        .order('gio_bat_dau');
+
+      if (error || !data || !data.length) {
+        container.innerHTML = '<div class="empty-state"><span class="icon">😔</span><p>Không có suất chiếu nào vào ngày này</p></div>';
+        return;
+      }
+
+      // Group by cinema
+      const byCinema = {};
+      data.forEach(s => {
+        const rapName = s.phong_chieu.rap.ten_rap;
+        if (!byCinema[rapName]) byCinema[rapName] = [];
+        byCinema[rapName].push(s);
+      });
+
+      container.innerHTML = Object.entries(byCinema).map(([rap, showtimes]) => `
+        <div class="cinema-section">
+          <h3 class="cinema-name">🏢 ${rap}</h3>
+          <div class="showtime-grid">
+            ${showtimes.map(s => `
+              <button class="showtime-btn" onclick="selectShowtime(${s.id})">
+                <span class="showtime-time">${FORMAT_GIO(s.gio_bat_dau)}</span>
+                <span class="showtime-room">${s.phong_chieu.ten_phong} · ${s.phong_chieu.loai_phong}</span>
+                <span class="showtime-price">${FORMAT_TIEN(s.gia_ve)}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectShowtime(suatId) {
+      if (!Auth.isLoggedIn()) {
+        showToast('Vui lòng đăng nhập để đặt vé', 'error');
+        setTimeout(() => window.location.href = '/pages/dang-nhap', 1000);
+        return;
+      }
+      BookingStore.save({ suatChieuId: suatId, phimId: parseInt(movieId) });
+      window.location.href = '/pages/chon-ghe?suat=' + suatId;
+    }
+
+    loadMovie();
+  </script>
+</body>
+</html>

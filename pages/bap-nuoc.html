@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chọn Bắp Nước - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div class="steps">
+        <span class="step done">1<span class="step-label">Chọn phim</span></span><span class="step-line done"></span>
+        <span class="step done">2<span class="step-label">Chọn ghế</span></span><span class="step-line done"></span>
+        <span class="step active">3<span class="step-label">Bắp nước</span></span><span class="step-line"></span>
+        <span class="step">4<span class="step-label">Thanh toán</span></span>
+      </div>
+      <div class="page-header">
+        <h1 class="page-title">🍿 Chọn Bắp Nước & Combo</h1>
+        <p class="page-subtitle">Thêm đồ ăn thức uống cho trải nghiệm xem phim trọn vẹn (không bắt buộc)</p>
+      </div>
+
+      <div class="booking-layout">
+        <div>
+          <div class="section">
+            <h3 class="section-title">🎁 Combo tiết kiệm</h3>
+            <div id="comboList" class="combo-grid"></div>
+          </div>
+          <div class="section">
+            <h3 class="section-title">🍿 Bắp rang</h3>
+            <div id="bapList" class="combo-grid"></div>
+          </div>
+          <div class="section">
+            <h3 class="section-title">🥤 Nước uống</h3>
+            <div id="nuocList" class="combo-grid"></div>
+          </div>
+          <div class="section">
+            <h3 class="section-title">🌭 Đồ ăn nhẹ</h3>
+            <div id="doAnList" class="combo-grid"></div>
+          </div>
+        </div>
+
+        <div class="booking-sidebar">
+          <h3 style="margin-bottom: 16px;">📋 Đơn hàng</h3>
+          <div id="orderSummary"></div>
+          <div class="divider"></div>
+          <div class="summary-row"><span class="summary-label">Tiền ghế</span><span id="seatTotal">0đ</span></div>
+          <div class="summary-row"><span class="summary-label">Tiền combo</span><span id="comboTotal">0đ</span></div>
+          <div class="divider"></div>
+          <div class="summary-row"><span class="summary-label"><strong>Tổng cộng</strong></span><span id="grandTotal" class="summary-total">0đ</span></div>
+          <button class="btn btn-primary btn-full btn-lg" style="margin-top: 16px;" onclick="goToPayment()">Tiếp tục → Thanh toán</button>
+          <button class="btn btn-secondary btn-full" style="margin-top: 8px;" onclick="goToPayment()">Bỏ qua, không mua combo</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+    const booking = BookingStore.get();
+    if (!booking.suatChieuId) { window.location.href = '/'; throw 'err'; }
+
+    let combos = [];
+    let cart = {}; // { comboId: quantity }
+
+    async function loadCombos() {
+      const { data } = await db.from('combo').select('*').order('loai').order('gia');
+      combos = data || [];
+      renderCombos('combo', 'comboList');
+      renderCombos('bap', 'bapList');
+      renderCombos('nuoc', 'nuocList');
+      renderCombos('do_an', 'doAnList');
+      updateSummary();
+    }
+
+    function renderCombos(loai, containerId) {
+      const container = document.getElementById(containerId);
+      const items = combos.filter(c => c.loai === loai);
+      if (!items.length) { container.parentElement.style.display = 'none'; return; }
+      container.innerHTML = items.map(c => `
+        <div class="card combo-card">
+          <img src="${c.hinh_url}" alt="${c.ten_combo}" class="combo-image" onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'80\\' height=\\'80\\'><text y=\\'.8em\\' font-size=\\'50\\'>${loai==='bap'?'🍿':loai==='nuoc'?'🥤':loai==='combo'?'🎁':'🌭'}</text></svg>'">
+          <div class="combo-info">
+            <div class="combo-name">${c.ten_combo}</div>
+            <div class="combo-desc">${c.mo_ta || ''}</div>
+            <div class="combo-price">${FORMAT_TIEN(c.gia)}</div>
+            <div class="combo-qty">
+              <button class="qty-btn" onclick="changeQty(${c.id}, -1)">−</button>
+              <span class="qty-num" id="qty-${c.id}">${cart[c.id] || 0}</span>
+              <button class="qty-btn" onclick="changeQty(${c.id}, 1)">+</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function changeQty(id, delta) {
+      const current = cart[id] || 0;
+      const newQty = Math.max(0, Math.min(10, current + delta));
+      if (newQty === 0) delete cart[id]; else cart[id] = newQty;
+      document.getElementById(`qty-${id}`).textContent = newQty;
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const orderDiv = document.getElementById('orderSummary');
+      let html = `<p><strong>${booking.phimTen}</strong></p>
+        <p class="text-muted" style="font-size:0.85rem">${booking.rapTen} · ${booking.phongTen}</p>
+        <p class="text-muted" style="font-size:0.85rem">${FORMAT_NGAY(booking.ngayChieu)} · ${FORMAT_GIO(booking.gioBatDau)}</p>
+        <p style="font-size:0.9rem">Ghế: <strong>${(booking.gheLabels||[]).join(', ')}</strong></p>`;
+      orderDiv.innerHTML = html;
+
+      document.getElementById('seatTotal').textContent = FORMAT_TIEN(booking.tongTienGhe || 0);
+
+      let comboTotal = 0;
+      Object.entries(cart).forEach(([id, qty]) => {
+        const combo = combos.find(c => c.id === parseInt(id));
+        if (combo) comboTotal += combo.gia * qty;
+      });
+      document.getElementById('comboTotal').textContent = FORMAT_TIEN(comboTotal);
+      document.getElementById('grandTotal').textContent = FORMAT_TIEN((booking.tongTienGhe || 0) + comboTotal);
+    }
+
+    function goToPayment() {
+      const comboItems = [];
+      Object.entries(cart).forEach(([id, qty]) => {
+        const combo = combos.find(c => c.id === parseInt(id));
+        if (combo && qty > 0) {
+          comboItems.push({ comboId: combo.id, ten: combo.ten_combo, gia: combo.gia, soLuong: qty, thanhTien: combo.gia * qty });
+        }
+      });
+      const tongTienCombo = comboItems.reduce((s, c) => s + c.thanhTien, 0);
+      BookingStore.save({ comboItems, tongTienCombo });
+      window.location.href = '/pages/thanh-toan';
+    }
+
+    loadCombos();
+  </script>
+</body>
+</html>

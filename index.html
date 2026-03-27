@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineTicket - Đặt Vé Xem Phim Trực Tuyến</title>
+  <meta name="description" content="Hệ thống đặt vé xem phim trực tuyến - Đặt vé nhanh, chọn ghế dễ dàng, thanh toán tiện lợi">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-bg">
+        <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&q=80" alt="Cinema Hall">
+        <div></div>
+      </div>
+      <div class="hero-content">
+        <h1>🎬 Đặt Vé Xem Phim <br><span class="highlight">Trực Tuyến</span></h1>
+        <p>Chọn phim yêu thích, đặt ghế nhanh chóng, thanh toán tiện lợi chỉ trong vài bước đơn giản.</p>
+        <div class="hero-actions">
+          <a href="#dangChieuSection" class="btn btn-primary btn-lg">Khám phá ngay</a>
+          <a href="#dangChieuSection" class="btn btn-outline btn-lg">Xem lịch chiếu</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Promo Banner Carousel -->
+    <section class="movie-section" style="padding-top: 40px; padding-bottom: 0;">
+      <div class="promo-carousel" id="promoCarousel">
+        <div class="promo-track" id="promoTrack">
+          <!-- Slide 1: Combo -->
+          <div class="promo-slide">
+            <img src="images/banners/combo-promo.png" alt="Combo siêu tiết kiệm">
+            <div class="promo-overlay">
+              <span class="promo-tag">🎁 Ưu đãi</span>
+              <div class="promo-title">Combo Siêu Tiết Kiệm<br>Giảm 20% Mọi Ngày</div>
+              <div class="promo-desc">Bắp + Nước chỉ từ 59K. Áp dụng khi mua vé online tại CineTicket.</div>
+            </div>
+          </div>
+          <!-- Slide 2: Phim Bom Tấn -->
+          <div class="promo-slide">
+            <img src="images/banners/movie-premiere.png" alt="Phim bom tấn 2025">
+            <div class="promo-overlay">
+              <span class="promo-tag">🎬 Sắp chiếu</span>
+              <div class="promo-title">Phim Bom Tấn 2025<br>Đặt Vé Sớm Giảm 30%</div>
+              <div class="promo-desc">Liên Minh Sấm Sét, Lật Mặt 8 và nhiều bom tấn đang chờ bạn.</div>
+            </div>
+          </div>
+          <!-- Slide 3: Sinh viên -->
+          <div class="promo-slide">
+            <img src="images/banners/student-deal.png" alt="Ưu đãi sinh viên">
+            <div class="promo-overlay">
+              <span class="promo-tag">🎓 Sinh viên</span>
+              <div class="promo-title">Ưu Đãi Sinh Viên<br>Chỉ 45K/Vé</div>
+              <div class="promo-desc">Áp dụng tất cả các ngày trong tuần. Xuất trình thẻ sinh viên khi vào rạp.</div>
+            </div>
+          </div>
+          <!-- Slide 4: Cuối tuần -->
+          <div class="promo-slide">
+            <img src="images/banners/weekend-promo.png" alt="Cuối tuần cùng CineTicket">
+            <div class="promo-overlay">
+              <span class="promo-tag">🎉 Cuối tuần</span>
+              <div class="promo-title">Cuối Tuần Vui Vẻ<br>Mua 2 Tặng 1</div>
+              <div class="promo-desc">Mua 2 vé tặng 1 combo bắp nước miễn phí. Chỉ áp dụng T7 & CN.</div>
+            </div>
+          </div>
+        </div>
+        <button class="promo-btn-prev" onclick="promoSlide(-1)">‹</button>
+        <button class="promo-btn-next" onclick="promoSlide(1)">›</button>
+        <div class="promo-dots" id="promoDots"></div>
+      </div>
+    </section>
+
+    <!-- Phim Đang Chiếu -->
+    <section class="movie-section" id="dangChieuSection" style="background: var(--surface);">
+      <div class="movie-section-header">
+        <div>
+          <h2 class="section-title">🔥 Phim Đang Chiếu</h2>
+          <div class="section-underline"></div>
+        </div>
+        <a href="#">Xem tất cả</a>
+      </div>
+      <div id="dangChieu" class="movie-grid">
+        <div class="loading"><div class="spinner"></div><p>Đang tải phim...</p></div>
+      </div>
+    </section>
+
+    <!-- Phim Sắp Chiếu -->
+    <section class="movie-section" id="sapChieuSection" style="background: var(--surface-container-lowest);">
+      <div class="movie-section-header">
+        <div>
+          <h2 class="section-title">📅 Phim Sắp Chiếu</h2>
+          <div class="section-underline" style="background: var(--secondary);"></div>
+        </div>
+      </div>
+      <div id="sapChieu" class="upcoming-grid">
+        <div class="loading"><div class="spinner"></div><p>Đang tải...</p></div>
+      </div>
+    </section>
+
+    <!-- Newsletter CTA -->
+    <section class="newsletter-section" style="background: var(--surface);">
+      <div class="newsletter-card">
+        <h2>Nhận Ưu Đãi Đặc Biệt</h2>
+        <p>Đăng ký để nhận thông tin về các bộ phim bom tấn và mã giảm giá độc quyền hàng tuần.</p>
+        <div class="newsletter-form">
+          <input type="email" class="form-input" placeholder="Email của bạn">
+          <button class="btn btn-primary">Đăng ký</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    async function loadMovies() {
+      const { data: movies, error } = await db
+        .from('phim')
+        .select('*')
+        .order('ngay_khoi_chieu', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        document.getElementById('dangChieu').innerHTML = '<p class="text-muted">Không thể tải phim</p>';
+        return;
+      }
+
+      const dangChieu = movies.filter(m => m.trang_thai === 'dang_chieu');
+      const sapChieu = movies.filter(m => m.trang_thai === 'sap_chieu');
+
+      renderMovieGrid('dangChieu', dangChieu);
+      renderUpcoming('sapChieu', sapChieu);
+    }
+
+    function renderMovieGrid(containerId, movies) {
+      const container = document.getElementById(containerId);
+      if (!movies.length) {
+        container.innerHTML = '<div class="empty-state"><span class="icon">🎬</span><p>Chưa có phim</p></div>';
+        return;
+      }
+      container.innerHTML = movies.map(m => {
+        const genres = (m.the_loai || '').split(',').map(g => g.trim()).filter(Boolean);
+        return `
+        <a href="/pages/phim?id=${m.id}" class="movie-card" style="text-decoration:none;color:inherit;">
+          <div class="movie-card-poster">
+            <img src="${m.poster_url}" alt="${m.ten_phim}" class="movie-poster" onerror="posterFallback(this)">
+            <span class="movie-badge badge-showing">Đang chiếu</span>
+            <div class="movie-card-scrim">
+              <span class="btn btn-primary btn-sm btn-full">Đặt vé</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="movie-title">${m.ten_phim}</div>
+            <div class="movie-info">
+              <span class="movie-rating">⭐ ${m.diem_danh_gia}</span>
+              <span>• ${m.thoi_luong} phút</span>
+            </div>
+            <div class="movie-genres">
+              ${genres.slice(0,2).map(g => `<span class="genre-tag">${g}</span>`).join('')}
+            </div>
+          </div>
+        </a>
+      `}).join('');
+    }
+
+    function renderUpcoming(containerId, movies) {
+      const container = document.getElementById(containerId);
+      if (!movies.length) {
+        container.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>Chưa có phim sắp chiếu</p></div>';
+        return;
+      }
+      container.innerHTML = movies.map(m => {
+        const date = m.ngay_khoi_chieu ? new Date(m.ngay_khoi_chieu).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+        return `
+        <div class="upcoming-card">
+          <div class="upcoming-poster">
+            <img src="${m.poster_url}" alt="${m.ten_phim}" onerror="posterFallback(this)">
+            <span class="movie-badge badge-coming">Sắp chiếu</span>
+          </div>
+          <div class="upcoming-info">
+            <span class="upcoming-date">Khởi chiếu: ${date}</span>
+            <h3 class="upcoming-title">${m.ten_phim}</h3>
+            <p class="upcoming-desc">${m.mo_ta || 'Thông tin sẽ được cập nhật sớm.'}</p>
+            <a href="/pages/phim?id=${m.id}" class="btn btn-outline btn-sm">Chi tiết phim</a>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    loadMovies();
+
+    // ---- Promo Carousel ----
+    (function() {
+      const track = document.getElementById('promoTrack');
+      const dotsContainer = document.getElementById('promoDots');
+      const slides = track.querySelectorAll('.promo-slide');
+      let current = 0;
+      let autoTimer;
+
+      // Create dots
+      slides.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'promo-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goTo(i);
+        dotsContainer.appendChild(dot);
+      });
+
+      function goTo(index) {
+        current = ((index % slides.length) + slides.length) % slides.length;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dotsContainer.querySelectorAll('.promo-dot').forEach((d, i) => {
+          d.classList.toggle('active', i === current);
+        });
+      }
+
+      function autoPlay() { autoTimer = setInterval(() => goTo(current + 1), 4000); }
+      function stopAuto() { clearInterval(autoTimer); }
+
+      window.promoSlide = function(dir) { stopAuto(); goTo(current + dir); autoPlay(); };
+
+      // Pause on hover
+      const carousel = document.getElementById('promoCarousel');
+      carousel.addEventListener('mouseenter', stopAuto);
+      carousel.addEventListener('mouseleave', autoPlay);
+
+      autoPlay();
+    })();
+  </script>
+</body>
+</html>

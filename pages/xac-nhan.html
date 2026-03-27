@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác Nhận Đặt Vé - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">`n  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div class="steps">
+        <span class="step done">1<span class="step-label">Chọn phim</span></span><span class="step-line done"></span>
+        <span class="step done">2<span class="step-label">Chọn ghế</span></span><span class="step-line done"></span>
+        <span class="step done">3<span class="step-label">Bắp nước</span></span><span class="step-line done"></span>
+        <span class="step done">4<span class="step-label">Hoàn tất</span></span>
+      </div>
+
+      <!-- Success Heading -->
+      <div class="confirmation-page">
+        <div class="confirmation-icon">✅</div>
+        <h1 class="confirmation-title">🎉 Đặt Vé Thành Công!</h1>
+        <p class="confirmation-subtitle">Xuất trình mã QR tại quầy soát vé để vào rạp</p>
+      </div>
+
+      <!-- Ticket Card -->
+      <div class="confirmation-card">
+        <div class="confirmation-backdrop">
+          <img id="backdropImg" src="" alt="">
+          <div class="confirmation-backdrop-overlay"></div>
+        </div>
+
+        <div class="confirmation-body">
+          <div class="booking-code" id="bookingCode"></div>
+
+          <div class="qr-container">
+            <canvas id="qrCanvas"></canvas>
+          </div>
+
+          <div class="ticket-info">
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">🎬 Phim</div>
+              <div class="ticket-info-value" id="tPhim"></div>
+            </div>
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">🏢 Rạp phim</div>
+              <div class="ticket-info-value" id="tRap"></div>
+            </div>
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">📅 Ngày chiếu</div>
+              <div class="ticket-info-value" id="tNgay"></div>
+            </div>
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">🕐 Giờ chiếu</div>
+              <div class="ticket-info-value" id="tGio"></div>
+            </div>
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">🪑 Vị trí</div>
+              <div class="ticket-info-value" id="tGhe" style="color: var(--secondary); font-weight: 800;"></div>
+            </div>
+            <div class="ticket-info-item">
+              <div class="ticket-info-label">💳 Thanh toán</div>
+              <div class="ticket-info-value" id="tPhuongThuc"></div>
+            </div>
+          </div>
+
+          <div class="ticket-total">
+            <span style="font-weight: 700;">Tổng thanh toán</span>
+            <span id="tTong" style="font-weight: 900; color: var(--accent); font-size: 1.3rem;"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="confirmation-actions">
+        <a href="/" class="btn btn-primary btn-lg">🏠 Về trang chủ</a>
+        <a href="/pages/lich-su" class="btn btn-outline btn-lg">📋 Xem lịch sử</a>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    const booking = BookingStore.get();
+    if (!booking.maDatVe) { window.location.href = '/'; throw 'err'; }
+
+    document.getElementById('bookingCode').textContent = booking.maDatVe;
+    document.getElementById('tPhim').textContent = booking.phimTen || '';
+    document.getElementById('tRap').textContent = `${booking.rapTen||''} - ${booking.phongTen||''}`;
+    document.getElementById('tNgay').textContent = booking.ngayChieu ? FORMAT_NGAY(booking.ngayChieu) : '';
+    document.getElementById('tGio').textContent = booking.gioBatDau ? FORMAT_GIO(booking.gioBatDau) : '';
+    document.getElementById('tGhe').textContent = (booking.gheLabels||[]).join(', ');
+    document.getElementById('tTong').textContent = FORMAT_TIEN(booking.tongTien || 0);
+    document.getElementById('tPhuongThuc').textContent = booking.phuongThuc || 'Online';
+
+    // Load movie poster for backdrop
+    if (booking.phimId) {
+      db.from('phim').select('poster_url').eq('id', booking.phimId).single().then(({data}) => {
+        if (data && data.poster_url) {
+          document.getElementById('backdropImg').src = data.poster_url;
+        }
+      });
+    }
+
+    // Generate QR Code
+    QRCode.toCanvas(document.getElementById('qrCanvas'), booking.maDatVe, {
+      width: 200, margin: 2, color: { dark: '#1a1a2e', light: '#ffffff' }
+    });
+
+    // Clear booking data
+    BookingStore.clear();
+  </script>
+</body>
+</html>

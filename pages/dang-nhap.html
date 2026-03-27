@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">`n  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div class="auth-container">
+        <h1>🔐 Đăng Nhập</h1>
+        <p class="subtitle">Đăng nhập để đặt vé và quản lý tài khoản</p>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">📧 Email</label>
+            <input type="email" class="form-input" id="email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🔒 Mật khẩu</label>
+            <input type="password" class="form-input" id="password" placeholder="••••••" required>
+          </div>
+          <div style="text-align: right; margin-bottom: 16px;">
+            <a href="#" style="color: var(--text-muted); font-size: 0.85rem;">Quên mật khẩu?</a>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="loginBtn">Đăng nhập</button>
+        </form>
+
+        <div class="auth-footer">
+          Chưa có tài khoản? <a href="/pages/dang-ky"><strong>Đăng ký ngay</strong></a>
+        </div>
+
+        <div class="auth-divider">Tài khoản demo</div>
+
+        <div>
+          <button class="demo-btn" onclick="quickLogin('khach1@demo.com')">
+            <span><span class="demo-icon">👤</span> Khách hàng - khach1@demo.com</span>
+            <span class="demo-arrow">›</span>
+          </button>
+          <button class="demo-btn" onclick="quickLogin('nhanvien@demo.com')">
+            <span><span class="demo-icon">🎫</span> Nhân viên - nhanvien@demo.com</span>
+            <span class="demo-arrow">›</span>
+          </button>
+          <button class="demo-btn manager-btn" onclick="quickLogin('quanly@demo.com')">
+            <span><span class="demo-icon">⭐</span> Quản lý - quanly@demo.com</span>
+            <span class="demo-arrow">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (Auth.isLoggedIn()) Auth.redirectByRole();
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang đăng nhập...';
+      try {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        await Auth.login(email, password);
+        showToast('Đăng nhập thành công!', 'success');
+        setTimeout(() => Auth.redirectByRole(), 500);
+      } catch (err) {
+        showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Đăng nhập';
+      }
+    }
+
+    async function quickLogin(email) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = '123456';
+      try {
+        await Auth.login(email, '123456');
+        showToast('Đăng nhập thành công!', 'success');
+        setTimeout(() => Auth.redirectByRole(), 500);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

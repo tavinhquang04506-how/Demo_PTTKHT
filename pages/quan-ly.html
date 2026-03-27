@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">`n  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 32px;">
+        <div>
+          <p class="dashboard-welcome" id="welcomeMsg">Xin chào</p>
+          <h1 class="page-title">📊 Dashboard Quản Lý</h1>
+        </div>
+        <div class="dashboard-date" id="todayDate"></div>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value red" id="sRevenue">--</div>
+          <div class="stat-label">Doanh thu hôm nay</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎫</div>
+          <div class="stat-value white" id="sTickets">--</div>
+          <div class="stat-label">Vé bán hôm nay</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎬</div>
+          <div class="stat-value green" id="sMovies">--</div>
+          <div class="stat-label">Phim đang chiếu</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value blue" id="sUsers">--</div>
+          <div class="stat-label">Tổng khách hàng</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('revenue',this)">💰 Doanh thu</button>
+        <button class="tab-btn" onclick="showTab('showtime',this)">🎬 Suất chiếu</button>
+        <button class="tab-btn" onclick="showTab('movies',this)">🎞️ Phim</button>
+        <button class="tab-btn" onclick="showTab('tickets',this)">🎫 Vé gần đây</button>
+      </div>
+
+      <!-- Tab: Revenue -->
+      <div class="tab-content active" id="tab-revenue">
+        <div style="padding:24px; background:var(--surface-container); border-radius:var(--radius); border:1px solid rgba(90,64,66,0.1);">
+          <h3 style="margin-bottom:20px;">💰 Doanh thu 7 ngày gần đây</h3>
+          <div id="revenueChart"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Showtime -->
+      <div class="tab-content" id="tab-showtime">
+        <div class="dashboard-table-card">
+          <div class="dashboard-table-header">
+            <h3>📅 Suất chiếu hôm nay</h3>
+          </div>
+          <div id="showtimeTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Tab: Movies -->
+      <div class="tab-content" id="tab-movies">
+        <div class="dashboard-table-card">
+          <div class="dashboard-table-header">
+            <h3>🎞️ Danh sách phim</h3>
+          </div>
+          <div id="movieTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Tab: Recent Tickets -->
+      <div class="tab-content" id="tab-tickets">
+        <div class="dashboard-table-card">
+          <div class="dashboard-table-header">
+            <h3>🎫 Vé đặt gần đây</h3>
+          </div>
+          <div id="ticketTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+    if (Auth.getRole() !== 'quan_ly') { alert('Chỉ quản lý mới được truy cập'); window.location.href='/'; throw 'err'; }
+
+    // Greeting
+    const user = Auth.getUser();
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? '☀️ Chào buổi sáng' : hour < 18 ? '🌤️ Chào buổi chiều' : '🌙 Chào buổi tối';
+    document.getElementById('welcomeMsg').textContent = `${greeting}, ${user.ho_ten.split(' ').pop()}.`;
+    document.getElementById('todayDate').textContent = `📅 ${new Date().toLocaleDateString('vi-VN', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'})}`;
+
+    function showTab(tab, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    async function loadStats() {
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: todayTickets } = await db.from('dat_ve').select('tong_tien, created_at')
+        .in('trang_thai', ['da_thanh_toan', 'da_su_dung'])
+        .gte('created_at', today + 'T00:00:00')
+        .lte('created_at', today + 'T23:59:59');
+
+      const todayRevenue = (todayTickets||[]).reduce((s,t) => s + t.tong_tien, 0);
+      document.getElementById('sRevenue').textContent = FORMAT_TIEN(todayRevenue);
+      document.getElementById('sTickets').textContent = (todayTickets||[]).length;
+
+      const { count: movieCount } = await db.from('phim').select('id', {count:'exact'}).eq('trang_thai', 'dang_chieu');
+      document.getElementById('sMovies').textContent = movieCount || 0;
+
+      const { count: userCount } = await db.from('nguoi_dung').select('id', {count:'exact'}).eq('vai_tro', 'khach_hang');
+      document.getElementById('sUsers').textContent = userCount || 0;
+
+      loadRevenueChart();
+    }
+
+    async function loadRevenueChart() {
+      const chart = document.getElementById('revenueChart');
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const { data } = await db.from('dat_ve').select('tong_tien')
+          .in('trang_thai', ['da_thanh_toan', 'da_su_dung'])
+          .gte('created_at', dateStr + 'T00:00:00').lte('created_at', dateStr + 'T23:59:59');
+        const rev = (data||[]).reduce((s,t) => s + t.tong_tien, 0);
+        days.push({ date: `${d.getDate()}/${d.getMonth()+1}`, revenue: rev });
+      }
+      const max = Math.max(...days.map(d => d.revenue), 1);
+      chart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:12px;height:220px;padding-top:20px;">
+        ${days.map(d => {
+          const h = Math.max(8, (d.revenue / max) * 170);
+          return `<div style="flex:1;text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:6px;font-weight:600;">${d.revenue > 0 ? FORMAT_TIEN(d.revenue) : '0'}</div>
+            <div style="height:${h}px;background:linear-gradient(to top,var(--accent),var(--secondary));border-radius:8px 8px 0 0;margin:0 auto;width:75%;transition:height 0.5s ease;"></div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;font-weight:600;">${d.date}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    async function loadShowtimes() {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await db.from('suat_chieu').select('*, phim(ten_phim), phong_chieu(ten_phong, rap(ten_rap))')
+        .eq('ngay_chieu', today).order('gio_bat_dau');
+      const c = document.getElementById('showtimeTable');
+      if (!data||!data.length) { c.innerHTML='<div class="empty-state"><p>Không có suất chiếu hôm nay</p></div>'; return; }
+      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Giờ</th><th>Phim</th><th>Rạp</th><th>Phòng</th><th>Giá</th></tr></thead>
+        <tbody>${data.map(s => `<tr><td><strong>${FORMAT_GIO(s.gio_bat_dau)}</strong></td><td>${s.phim.ten_phim}</td>
+          <td>${s.phong_chieu.rap.ten_rap}</td><td>${s.phong_chieu.ten_phong}</td><td style="color:var(--secondary);font-weight:700;">${FORMAT_TIEN(s.gia_ve)}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    async function loadMovies() {
+      const { data } = await db.from('phim').select('*').order('trang_thai').order('ten_phim');
+      const c = document.getElementById('movieTable');
+      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Phim</th><th>Thể loại</th><th>Thời lượng</th><th>Đánh giá</th><th>Trạng thái</th></tr></thead>
+        <tbody>${(data||[]).map(m => `<tr><td><strong>${m.ten_phim}</strong></td><td>${m.the_loai||''}</td><td>${m.thoi_luong} phút</td>
+          <td><span class="movie-rating">⭐ ${m.diem_danh_gia}</span></td>
+          <td><span class="status-badge ${m.trang_thai==='dang_chieu'?'status-da_thanh_toan':'status-cho_thanh_toan'}">${m.trang_thai==='dang_chieu'?'Đang chiếu':'Sắp chiếu'}</span></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    async function loadRecentTickets() {
+      const { data } = await db.from('dat_ve').select('*, nguoi_dung(ho_ten), suat_chieu(phim(ten_phim))')
+        .order('created_at', { ascending: false }).limit(20);
+      const c = document.getElementById('ticketTable');
+      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Mã vé</th><th>Khách hàng</th><th>Phim</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
+        <tbody>${(data||[]).map(d => `<tr><td style="color:var(--accent);font-weight:700;">${d.ma_dat_ve}</td>
+          <td><strong>${d.nguoi_dung?.ho_ten||'N/A'}</strong></td><td>${d.suat_chieu?.phim?.ten_phim||'N/A'}</td>
+          <td style="font-weight:700;">${FORMAT_TIEN(d.tong_tien)}</td>
+          <td><span class="status-badge status-${d.trang_thai}">${(TRANG_THAI_VE[d.trang_thai]||{ten:d.trang_thai}).ten}</span></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    loadStats();
+    loadShowtimes();
+    loadMovies();
+    loadRecentTickets();
+  </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh Toán - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div class="steps">
+        <span class="step done">1<span class="step-label">Chọn phim</span></span><span class="step-line done"></span>
+        <span class="step done">2<span class="step-label">Chọn ghế</span></span><span class="step-line done"></span>
+        <span class="step done">3<span class="step-label">Bắp nước</span></span><span class="step-line done"></span>
+        <span class="step active">4<span class="step-label">Thanh toán</span></span>
+      </div>
+      <div class="page-header">
+        <h1 class="page-title">💳 Thanh Toán</h1>
+      </div>
+      <div class="booking-layout">
+        <div>
+          <div class="section">
+            <h3 class="section-title">🎟️ Chi tiết đơn hàng</h3>
+            <div id="orderDetail" class="card" style="padding:20px;"></div>
+          </div>
+          <div class="section">
+            <h3 class="section-title">🏷️ Mã giảm giá</h3>
+            <div class="voucher-input">
+              <input type="text" class="form-input" id="voucherInput" placeholder="Nhập mã giảm giá (VD: CHAOBAN2026)">
+              <button class="btn btn-secondary" onclick="applyVoucher()">Áp dụng</button>
+            </div>
+            <div id="voucherResult"></div>
+          </div>
+          <div class="section">
+            <h3 class="section-title">💳 Phương thức thanh toán</h3>
+            <div class="payment-methods">
+              <div class="payment-option" onclick="selectPayment('momo', this)"><span class="icon">📱</span><span class="name">MoMo</span></div>
+              <div class="payment-option" onclick="selectPayment('zalopay', this)"><span class="icon">💙</span><span class="name">ZaloPay</span></div>
+              <div class="payment-option" onclick="selectPayment('vnpay', this)"><span class="icon">🏦</span><span class="name">VNPay</span></div>
+              <div class="payment-option" onclick="selectPayment('the', this)"><span class="icon">💳</span><span class="name">Thẻ ngân hàng</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="booking-sidebar">
+          <h3 style="margin-bottom:16px;">📋 Tóm tắt</h3>
+          <div id="summary"></div>
+          <div class="divider"></div>
+          <div class="summary-row"><span>Tiền ghế</span><span id="sTotal">0đ</span></div>
+          <div class="summary-row"><span>Tiền combo</span><span id="cTotal">0đ</span></div>
+          <div class="summary-row" id="discountRow" style="display:none;"><span>Giảm giá</span><span id="dTotal" class="text-success">-0đ</span></div>
+          <div class="divider"></div>
+          <div class="summary-row"><span><strong>Tổng thanh toán</strong></span><span id="gTotal" class="summary-total">0đ</span></div>
+          <button class="btn btn-primary btn-full btn-lg" style="margin-top:20px;" id="payBtn" disabled onclick="processPayment()">Xác nhận thanh toán</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+    const booking = BookingStore.get();
+    if (!booking.suatChieuId) { window.location.href = '/'; throw 'err'; }
+
+    let selectedPayment = null;
+    let discount = 0;
+    let voucherCode = null;
+
+    function init() {
+      const d = document.getElementById('orderDetail');
+      d.innerHTML = `
+        <p><strong style="font-size:1.1rem">${booking.phimTen}</strong></p>
+        <p class="text-muted">${booking.rapTen} · ${booking.phongTen}</p>
+        <p class="text-muted">${FORMAT_NGAY(booking.ngayChieu)} · ${FORMAT_GIO(booking.gioBatDau)}</p>
+        <div class="divider"></div>
+        <p>🪑 Ghế: <strong>${(booking.gheLabels||[]).join(', ')}</strong></p>
+        ${(booking.comboItems||[]).length ? `<p style="margin-top:8px;">🍿 Combo:</p>
+          ${booking.comboItems.map(c=>`<p class="text-muted" style="font-size:0.9rem;">  ${c.ten} x${c.soLuong} = ${FORMAT_TIEN(c.thanhTien)}</p>`).join('')}` : ''}
+      `;
+      document.getElementById('summary').innerHTML = `<p><strong>${booking.phimTen}</strong></p><p class="text-muted" style="font-size:0.85rem;">${(booking.gheLabels||[]).join(', ')}</p>`;
+      updateTotals();
+    }
+
+    function updateTotals() {
+      const seatT = booking.tongTienGhe || 0;
+      const comboT = booking.tongTienCombo || 0;
+      document.getElementById('sTotal').textContent = FORMAT_TIEN(seatT);
+      document.getElementById('cTotal').textContent = FORMAT_TIEN(comboT);
+      if (discount > 0) {
+        document.getElementById('discountRow').style.display = 'flex';
+        document.getElementById('dTotal').textContent = '-' + FORMAT_TIEN(discount);
+      }
+      const grand = Math.max(0, seatT + comboT - discount);
+      document.getElementById('gTotal').textContent = FORMAT_TIEN(grand);
+    }
+
+    function selectPayment(method, el) {
+      document.querySelectorAll('.payment-option').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      selectedPayment = method;
+      document.getElementById('payBtn').disabled = false;
+    }
+
+    async function applyVoucher() {
+      const code = document.getElementById('voucherInput').value.trim().toUpperCase();
+      if (!code) return;
+      const { data: v } = await db.from('voucher').select('*').eq('ma_code', code).eq('da_su_dung', false).single();
+      const result = document.getElementById('voucherResult');
+      if (!v) { result.innerHTML = '<p style="color:var(--danger); margin-top:8px;">❌ Mã không hợp lệ hoặc đã sử dụng</p>'; discount = 0; voucherCode = null; updateTotals(); return; }
+      const total = (booking.tongTienGhe||0) + (booking.tongTienCombo||0);
+      if (total < v.dieu_kien_toi_thieu) { result.innerHTML = `<p style="color:var(--warning); margin-top:8px;">⚠️ Đơn tối thiểu ${FORMAT_TIEN(v.dieu_kien_toi_thieu)}</p>`; return; }
+      if (v.loai_giam === 'phan_tram') discount = Math.round(total * v.gia_tri / 100);
+      else discount = v.gia_tri;
+      voucherCode = code;
+      result.innerHTML = `<div class="voucher-applied">✅ Áp dụng: ${v.ten_voucher} - Giảm ${FORMAT_TIEN(discount)}</div>`;
+      updateTotals();
+    }
+
+    async function processPayment() {
+      const btn = document.getElementById('payBtn');
+      btn.disabled = true; btn.textContent = 'Đang xử lý...';
+      try {
+        const user = Auth.getUser();
+        const maDatVe = taoMaDatVe();
+        const tongTien = Math.max(0, (booking.tongTienGhe||0) + (booking.tongTienCombo||0) - discount);
+
+        // Create booking
+        const { data: dv, error: dvErr } = await db.from('dat_ve').insert({
+          ma_dat_ve: maDatVe, nguoi_dung_id: user.id, suat_chieu_id: booking.suatChieuId,
+          tong_tien_ghe: booking.tongTienGhe||0, tong_tien_combo: booking.tongTienCombo||0,
+          giam_gia: discount, tong_tien: tongTien, trang_thai: 'da_thanh_toan',
+          phuong_thuc: selectedPayment, voucher_code: voucherCode, ma_qr: maDatVe
+        }).select().single();
+        if (dvErr) throw dvErr;
+
+        // Create seat details
+        const seatInserts = (booking.gheIds||[]).map(gheId => ({
+          dat_ve_id: dv.id, ghe_id: gheId, gia_ve: booking.giaVe
+        }));
+        if (seatInserts.length) await db.from('chi_tiet_ve').insert(seatInserts);
+
+        // Create combo details
+        const comboInserts = (booking.comboItems||[]).map(c => ({
+          dat_ve_id: dv.id, combo_id: c.comboId, so_luong: c.soLuong, thanh_tien: c.thanhTien
+        }));
+        if (comboInserts.length) await db.from('chi_tiet_combo').insert(comboInserts);
+
+        // Mark voucher as used
+        if (voucherCode) await db.from('voucher').update({da_su_dung: true}).eq('ma_code', voucherCode);
+
+        // Update loyalty points
+        const points = Math.floor(tongTien / 10000);
+        await db.from('nguoi_dung').update({ diem_thuong: user.diem_thuong + points }).eq('id', user.id);
+
+        BookingStore.save({ maDatVe, datVeId: dv.id, tongTien });
+        showToast('Thanh toán thành công!', 'success');
+        setTimeout(() => window.location.href = '/pages/xac-nhan', 800);
+      } catch (err) {
+        console.error(err);
+        showToast('Lỗi thanh toán: ' + (err.message || 'Không xác định'), 'error');
+        btn.disabled = false; btn.textContent = 'Xác nhận thanh toán';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

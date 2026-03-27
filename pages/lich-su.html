@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch Sử Đặt Vé - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">📋 Lịch Sử Đặt Vé</h1>
+        <p class="page-subtitle">Theo dõi và quản lý các giao dịch đặt vé của bạn.</p>
+      </div>
+      <div id="historyList"><div class="loading"><div class="spinner"></div><p>Đang tải...</p></div></div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+
+    async function loadHistory() {
+      const user = Auth.getUser();
+      const { data } = await db
+        .from('dat_ve')
+        .select('*, suat_chieu(*, phim(*), phong_chieu(*, rap(*))), chi_tiet_ve(ghe(*)), chi_tiet_combo(combo(*), so_luong, thanh_tien)')
+        .eq('nguoi_dung_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('historyList');
+      if (!data || !data.length) {
+        container.innerHTML = '<div class="empty-state"><span class="icon">🎬</span><p>Bạn chưa có đơn đặt vé nào</p><a href="/" class="btn btn-primary" style="margin-top:16px;">Đặt vé ngay</a></div>';
+        return;
+      }
+
+      container.innerHTML = data.map(d => {
+        const sc = d.suat_chieu;
+        const gheList = d.chi_tiet_ve.map(c => `${c.ghe.hang_ghe}${c.ghe.so_ghe}`).join(', ');
+        const statusInfo = TRANG_THAI_VE[d.trang_thai] || { ten: d.trang_thai, mau: '#718096' };
+        return `
+        <div class="history-card">
+          <img src="${sc.phim.poster_url}" alt="${sc.phim.ten_phim}" class="history-poster" onerror="posterFallback(this)">
+          <div class="history-info">
+            <div class="history-movie-title">${sc.phim.ten_phim}</div>
+            <div class="history-detail">📍 ${sc.phong_chieu.rap.ten_rap} · ${sc.phong_chieu.ten_phong}</div>
+            <div class="history-detail">📅 ${FORMAT_NGAY(sc.ngay_chieu)} · ${FORMAT_GIO(sc.gio_bat_dau)}</div>
+            <div class="history-detail">🪑 Ghế: <strong>${gheList}</strong></div>
+            <div class="history-price">💰 ${FORMAT_TIEN(d.tong_tien)}</div>
+          </div>
+          <div class="history-right">
+            <span class="status-badge status-${d.trang_thai}">● ${statusInfo.ten}</span>
+            <div class="history-code">${d.ma_dat_ve}</div>
+            ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${d.ma_dat_ve}')">📱 Xem QR</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function showQR(code) {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);';
+      modal.onclick = () => modal.remove();
+      modal.innerHTML = `<div style="background:var(--surface-container);padding:32px;border-radius:var(--radius-lg);text-align:center;border:1px solid rgba(90,64,66,0.1);" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:8px;">Mã QR Vé</h3>
+        <p class="text-muted" style="margin-bottom:16px; font-family:monospace; letter-spacing:0.1em; color:var(--secondary)">${code}</p>
+        <div class="qr-container"><canvas id="modalQR"></canvas></div>
+        <button class="btn btn-outline" style="margin-top:16px;" onclick="this.closest('div[style]').parentElement.remove()">Đóng</button>
+      </div>`;
+      document.body.appendChild(modal);
+      QRCode.toCanvas(document.getElementById('modalQR'), code, { width: 200, color: { dark: '#1a1a2e', light: '#fff' } });
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>
