@@ -811,16 +811,26 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   .movie-detail-poster { max-width: 250px; margin: 0 auto; }
 
   /* ---- Seat Map: zoom-to-fit on mobile (like CGV app) ---- */
+  body { overflow-x: hidden; }
   .seat-map-container {
-    overflow: hidden; padding-bottom: 8px;
+    overflow: hidden;
+    padding-bottom: 8px;
     position: relative;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
   .seat-map-zoom {
-    transform-origin: top center;
+    transform-origin: top left;
+    width: max-content;
+    margin: 0 auto;
   }
-  .seat { width: 24px; height: 24px; font-size: 0.5rem; }
+  #seatMap {
+    width: max-content;
+    margin: 0 auto;
+  }
+  .seat { width: 24px; height: 24px; font-size: 0.5rem; border-radius: 4px; }
   .seat-doi { width: 52px; }
-  .seat-row { gap: 2px; margin-bottom: 2px; justify-content: center; }
+  .seat-row { gap: 2px; margin-bottom: 2px; justify-content: center; white-space: nowrap; }
   .seat-row-label { font-size: 0.6rem; width: 16px; }
   .seat-vip::after { font-size: 0.35rem; }
   .seat-legend { flex-wrap: wrap; gap: 8px; font-size: 0.7rem; padding: 10px; justify-content: center; }

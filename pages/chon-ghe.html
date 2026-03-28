@@ -217,26 +217,45 @@
     }
 
     function calcFitScale() {
-      const container = document.getElementById('seatMapContainer');
       const seatMap = document.getElementById('seatMap');
-      if (!container || !seatMap || !seatMap.scrollWidth) return 0.5;
-      return Math.min(1, (container.clientWidth - 16) / seatMap.scrollWidth);
+      const container = document.getElementById('seatMapContainer');
+      if (!seatMap || !container) return 0.85;
+      // Get actual rendered width of the seat map
+      const mapWidth = seatMap.getBoundingClientRect().width / scale; // un-scale current
+      const containerWidth = container.clientWidth;
+      if (mapWidth <= 0) return 0.85;
+      return Math.min(1, (containerWidth - 8) / mapWidth);
     }
 
     function resetZoom() {
       scale = window.innerWidth <= 768 ? calcFitScale() : 1;
       posX = 0; posY = 0;
       applyTransform();
+      adjustContainerHeight();
+    }
+
+    function adjustContainerHeight() {
+      // Reduce container height to match scaled content
+      const zoomEl = document.getElementById('seatMapZoom');
+      if (zoomEl && scale < 1) {
+        const naturalHeight = zoomEl.scrollHeight;
+        zoomEl.parentElement.style.minHeight = (naturalHeight * scale + 20) + 'px';
+      }
     }
 
     // Auto-fit on mobile after seats load
     function autoFitSeatMap() {
       if (window.innerWidth <= 768) {
+        // Apply with delay for DOM to render
         setTimeout(() => {
-          scale = calcFitScale();
-          posX = 0; posY = 0;
-          applyTransform();
-        }, 400);
+          scale = 1; applyTransform(); // Reset to measure true size
+          setTimeout(() => {
+            scale = calcFitScale();
+            posX = 0; posY = 0;
+            applyTransform();
+            adjustContainerHeight();
+          }, 50);
+        }, 300);
       }
     }
 
