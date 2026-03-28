@@ -201,78 +201,86 @@
     loadData();
 
     // ===== PINCH TO ZOOM & PAN =====
-    let scale = 1;
-    let posX = 0, posY = 0;
-    const MIN_SCALE = 0.35, MAX_SCALE = 2;
+    let scale = 1, posX = 0, posY = 0;
+    let initScale = 1;
+    const MIN_SCALE = 0.5, MAX_SCALE = 2.5;
+    const zoomEl = () => document.getElementById('seatMapZoom');
 
-    function applyTransform() {
-      const el = document.getElementById('seatMapZoom');
-      if (el) el.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+    function applyTransform(smooth) {
+      const el = zoomEl();
+      if (!el) return;
+      // Enable/disable smooth transition
+      el.style.transition = smooth ? 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
+      el.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
     }
 
     function zoomSeatMap(delta) {
       scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
-      if (scale <= calcFitScale() + 0.05) { posX = 0; posY = 0; }
-      applyTransform();
+      if (scale <= initScale + 0.05) { posX = 0; posY = 0; }
+      applyTransform(true);
+      adjustContainerHeight();
     }
 
     function calcFitScale() {
-      const seatMap = document.getElementById('seatMap');
-      const container = document.getElementById('seatMapContainer');
-      if (!seatMap || !container) return 0.85;
-      // Get actual rendered width of the seat map
-      const mapWidth = seatMap.getBoundingClientRect().width / scale; // un-scale current
-      const containerWidth = container.clientWidth;
-      if (mapWidth <= 0) return 0.85;
-      return Math.min(1, (containerWidth - 8) / mapWidth);
+      const map = document.getElementById('seatMap');
+      const ctn = document.getElementById('seatMapContainer');
+      if (!map || !ctn) return 0.9;
+      // Temporarily reset to measure natural width
+      const el = zoomEl();
+      const prevT = el ? el.style.transform : '';
+      if (el) { el.style.transition = 'none'; el.style.transform = 'none'; }
+      const mapW = map.scrollWidth;
+      if (el) el.style.transform = prevT;
+      const ctnW = ctn.clientWidth;
+      if (mapW <= 0) return 0.9;
+      return Math.min(1, ctnW / mapW);
     }
 
     function resetZoom() {
       scale = window.innerWidth <= 768 ? calcFitScale() : 1;
       posX = 0; posY = 0;
-      applyTransform();
+      applyTransform(true);
       adjustContainerHeight();
     }
 
     function adjustContainerHeight() {
-      // Reduce container height to match scaled content
-      const zoomEl = document.getElementById('seatMapZoom');
-      if (zoomEl && scale < 1) {
-        const naturalHeight = zoomEl.scrollHeight;
-        zoomEl.parentElement.style.minHeight = (naturalHeight * scale + 20) + 'px';
+      const el = zoomEl();
+      if (el && scale < 1) {
+        el.parentElement.style.height = (el.scrollHeight * scale + 20) + 'px';
+      } else if (el) {
+        el.parentElement.style.height = '';
       }
     }
 
-    // Auto-fit on mobile after seats load
     function autoFitSeatMap() {
       if (window.innerWidth <= 768) {
-        // Apply with delay for DOM to render
         setTimeout(() => {
-          scale = 1; applyTransform(); // Reset to measure true size
-          setTimeout(() => {
-            scale = calcFitScale();
-            posX = 0; posY = 0;
-            applyTransform();
-            adjustContainerHeight();
-          }, 50);
-        }, 300);
+          initScale = calcFitScale();
+          scale = initScale;
+          posX = 0; posY = 0;
+          applyTransform(false);
+          adjustContainerHeight();
+          // Re-enable smooth for subsequent interactions
+          setTimeout(() => applyTransform(true), 50);
+        }, 400);
       }
     }
 
-    // Touch gestures
+    // ===== TOUCH GESTURES =====
     (function() {
       const container = document.getElementById('seatMapContainer');
       if (!container) return;
-      let lastDist = 0, lastX = 0, lastY = 0, isDragging = false;
+      let lastDist = 0, lastX = 0, lastY = 0, isPinching = false, isDragging = false;
 
       container.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
           e.preventDefault();
+          isPinching = true;
           lastDist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
           );
-        } else if (e.touches.length === 1 && scale > 0.75) {
+        } else if (e.touches.length === 1 && scale > initScale + 0.1) {
           isDragging = true;
           lastX = e.touches[0].clientX - posX;
           lastY = e.touches[0].clientY - posY;
@@ -280,25 +288,35 @@
       }, { passive: false });
 
       container.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 2) {
+        if (e.touches.length === 2 && isPinching) {
           e.preventDefault();
           const dist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
           );
-          const delta = (dist - lastDist) * 0.005;
+          const delta = (dist - lastDist) * 0.008;
           scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
           lastDist = dist;
-          if (scale <= 0.7) { posX = 0; posY = 0; }
-          applyTransform();
-        } else if (e.touches.length === 1 && isDragging && scale > 0.75) {
+          if (scale <= initScale + 0.05) { posX = 0; posY = 0; }
+          applyTransform(false); // No transition during pinch for real-time feel
+          adjustContainerHeight();
+        } else if (e.touches.length === 1 && isDragging && scale > initScale + 0.1) {
+          e.preventDefault();
           posX = e.touches[0].clientX - lastX;
           posY = e.touches[0].clientY - lastY;
-          applyTransform();
+          applyTransform(false);
         }
       }, { passive: false });
 
-      container.addEventListener('touchend', function() { isDragging = false; lastDist = 0; });
+      container.addEventListener('touchend', function(e) {
+        if (isPinching && e.touches.length < 2) {
+          isPinching = false;
+          // Snap back if zoomed out too much
+          if (scale < initScale) { scale = initScale; posX = 0; posY = 0; applyTransform(true); }
+          adjustContainerHeight();
+        }
+        if (e.touches.length === 0) { isDragging = false; }
+      });
     })();
   </script>
 </body>

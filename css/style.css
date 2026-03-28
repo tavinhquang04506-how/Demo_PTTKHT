@@ -820,13 +820,13 @@ h4 { font-size: 1.1rem; font-weight: 700; }
     box-sizing: border-box;
   }
   .seat-map-zoom {
-    transform-origin: top left;
-    width: max-content;
-    margin: 0 auto;
+    transform-origin: top center;
+    display: flex;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
   }
   #seatMap {
     width: max-content;
-    margin: 0 auto;
   }
   .seat { width: 24px; height: 24px; font-size: 0.5rem; border-radius: 4px; }
   .seat-doi { width: 52px; }
