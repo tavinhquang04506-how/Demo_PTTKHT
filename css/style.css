@@ -760,7 +760,7 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   h2 { font-size: 1.3rem; }
 
   /* ---- Hero ---- */
-  .hero { min-height: 320px; padding: 0 16px; }
+  .hero { min-height: 320px; padding: 80px 16px 20px; }
   .hero h1 { font-size: 1.8rem; }
   .hero p { font-size: 0.9rem; max-width: 100%; }
   .hero-actions { flex-direction: column; gap: 10px; }
@@ -768,6 +768,10 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   .hero-bg::after {
     background: linear-gradient(to bottom, rgba(13,13,24,0.9) 0%, rgba(13,13,24,0.7) 50%, rgba(13,13,24,0.5) 100%);
   }
+
+  /* ---- Movie Detail: gap between button and showtime ---- */
+  #showtimeSection { margin-top: 32px; }
+  #showtimeSection .section-title { margin-top: 8px; }
 
   /* ---- Nav Mobile Menu ---- */
   .nav-toggle { display: block; }
@@ -806,20 +810,37 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   .movie-detail { grid-template-columns: 1fr; }
   .movie-detail-poster { max-width: 250px; margin: 0 auto; }
 
-  /* ---- Seat Map: horizontal scroll ---- */
+  /* ---- Seat Map: horizontal scroll + smaller on mobile ---- */
   .seat-map-container { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
-  .seat-map-container > div { min-width: 500px; }
-  .seat { width: 28px; height: 28px; font-size: 0.55rem; }
-  .seat-doi { width: 62px; }
-  .seat-row { gap: 3px; }
-  .seat-vip::after { font-size: 0.4rem; }
-  .seat-legend { flex-wrap: wrap; gap: 10px; font-size: 0.75rem; }
+  .seat { width: 26px; height: 26px; font-size: 0.5rem; }
+  .seat-doi { width: 56px; }
+  .seat-row { gap: 2px; margin-bottom: 3px; }
+  .seat-row-label { font-size: 0.65rem; width: 18px; }
+  .seat-vip::after { font-size: 0.35rem; }
+  .seat-legend { flex-wrap: wrap; gap: 8px; font-size: 0.7rem; padding: 10px; }
+  .legend-color { width: 18px; height: 18px; }
+  .screen { padding: 8px; font-size: 0.7rem; margin-bottom: 16px; }
 
   /* ---- Booking Sidebar ---- */
   .booking-layout { grid-template-columns: 1fr; }
   .booking-sidebar { position: static; }
   .booking-sidebar .btn { white-space: normal; word-break: break-word; padding: 14px 20px; }
   .summary-note { word-break: break-word; }
+
+  /* ---- Sticky bottom bar for combo/checkout on mobile ---- */
+  .mobile-sticky-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(13,13,24,0.97);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(90,64,66,0.2);
+    padding: 12px 16px; z-index: 999;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+  }
+  .mobile-sticky-bar .sticky-price { font-family: var(--font-headline); font-weight: 900; color: var(--accent); font-size: 1.1rem; }
+  .mobile-sticky-bar .sticky-label { font-size: 0.7rem; color: var(--text-muted); }
+  .mobile-sticky-bar .btn { flex-shrink: 0; padding: 12px 20px; font-size: 0.85rem; }
+  .has-sticky-bar { padding-bottom: 80px; }
 
   /* ---- Combo ---- */
   .combo-grid { grid-template-columns: 1fr; }
@@ -1043,3 +1064,22 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   .promo-slide .promo-desc { font-size: 0.8rem; }
   .promo-btn-prev, .promo-btn-next { width: 36px; height: 36px; font-size: 1.1rem; }
 }
+
+/* =====================================================
+   PAGINATION
+   ===================================================== */
+.pagination {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  padding: 16px 20px; border-top: 1px solid rgba(90,64,66,0.1);
+}
+.pagination button {
+  min-width: 36px; height: 36px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(90,64,66,0.15); background: var(--surface-container-high);
+  color: var(--on-surface); cursor: pointer; font-weight: 700; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition); padding: 0 10px;
+}
+.pagination button:hover { border-color: var(--accent); color: var(--accent); }
+.pagination button.active { background: var(--accent); color: white; border-color: var(--accent); }
+.pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+.pagination .page-info { font-size: 0.8rem; color: var(--text-muted); margin: 0 8px; }

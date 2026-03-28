@@ -174,29 +174,29 @@ INSERT INTO nguoi_dung (email, mat_khau, ho_ten, so_dien_thoai, vai_tro, diem_th
 -- =====================================================
 
 INSERT INTO phim (ten_phim, mo_ta, thoi_luong, dao_dien, dien_vien, the_loai, quoc_gia, gioi_han_tuoi, ngay_khoi_chieu, poster_url, diem_danh_gia, trang_thai) VALUES
-('Những Mảnh Ghép Cảm Xúc 2', 'Riley bước vào tuổi dậy thì và phải đối mặt với những cảm xúc mới: Lo Âu, Ghen Tị, Chán Nản và Xấu Hổ cùng xuất hiện trong tâm trí cô bé.', 100, 'Kelsey Mann', 'Amy Poehler, Maya Hawke, Ayo Edebiri', 'Hoạt hình, Hài, Gia đình', 'Mỹ', 'P', '2024-06-14', 'https://image.tmdb.org/t/p/w500/oxxqiyWrnM0XPnBtVe9TgYWnPxT.jpg', 7.6, 'dang_chieu'),
+('Những Mảnh Ghép Cảm Xúc 2', 'Riley bước vào tuổi dậy thì và phải đối mặt với những cảm xúc mới: Lo Âu, Ghen Tị, Chán Nản và Xấu Hổ cùng xuất hiện trong tâm trí cô bé.', 100, 'Kelsey Mann', 'Amy Poehler, Maya Hawke, Ayo Edebiri', 'Hoạt hình, Hài, Gia đình', 'Mỹ', 'P', '2026-04-01', 'https://image.tmdb.org/t/p/w500/oxxqiyWrnM0XPnBtVe9TgYWnPxT.jpg', 7.6, 'dang_chieu'),
 
-('Deadpool & Wolverine', 'Deadpool được tổ chức TVA tuyển dụng để cứu đa vũ trụ. Anh phải hợp tác với Wolverine trong một cuộc phiêu lưu điên rồ xuyên không gian và thời gian.', 128, 'Shawn Levy', 'Ryan Reynolds, Hugh Jackman, Emma Corrin', 'Hành động, Hài, Phiêu lưu', 'Mỹ', 'C18', '2024-07-26', 'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg', 7.8, 'dang_chieu'),
+('Deadpool & Wolverine', 'Deadpool được tổ chức TVA tuyển dụng để cứu đa vũ trụ. Anh phải hợp tác với Wolverine trong một cuộc phiêu lưu điên rồ xuyên không gian và thời gian.', 128, 'Shawn Levy', 'Ryan Reynolds, Hugh Jackman, Emma Corrin', 'Hành động, Hài, Phiêu lưu', 'Mỹ', 'C18', '2026-04-01', 'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg', 7.8, 'dang_chieu'),
 
-('Hành Tinh Cát: Phần Hai', 'Paul Atreides liên minh với người Fremen để trả thù những kẻ đã hủy diệt gia đình anh, đồng thời phải ngăn chặn một tương lai khủng khiếp mà chỉ mình anh thấy trước.', 166, 'Denis Villeneuve', 'Timothée Chalamet, Zendaya, Austin Butler', 'Khoa học viễn tưởng, Phiêu lưu', 'Mỹ', 'C13', '2024-03-01', 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg', 8.1, 'dang_chieu'),
+('Hành Tinh Cát: Phần Hai', 'Paul Atreides liên minh với người Fremen để trả thù những kẻ đã hủy diệt gia đình anh, đồng thời phải ngăn chặn một tương lai khủng khiếp mà chỉ mình anh thấy trước.', 166, 'Denis Villeneuve', 'Timothée Chalamet, Zendaya, Austin Butler', 'Khoa học viễn tưởng, Phiêu lưu', 'Mỹ', 'C13', '2026-04-02', 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg', 8.1, 'dang_chieu'),
 
-('Kung Fu Panda 4', 'Po được chọn làm Lãnh đạo Tinh thần của Thung lũng Hòa bình nhưng trước tiên phải tìm được người kế nhiệm vai trò Rồng Chiến binh, đồng thời đối đầu với phù thủy Tắc Kè Hoa đầy mưu mô.', 94, 'Mike Mitchell', 'Jack Black, Awkwafina, Viola Davis', 'Hoạt hình, Hành động, Hài', 'Mỹ', 'P', '2024-03-08', 'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg', 7.0, 'dang_chieu'),
+('Kung Fu Panda 4', 'Po được chọn làm Lãnh đạo Tinh thần của Thung lũng Hòa bình nhưng trước tiên phải tìm được người kế nhiệm vai trò Rồng Chiến binh, đồng thời đối đầu với phù thủy Tắc Kè Hoa đầy mưu mô.', 94, 'Mike Mitchell', 'Jack Black, Awkwafina, Viola Davis', 'Hoạt hình, Hành động, Hài', 'Mỹ', 'P', '2026-04-02', 'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg', 7.0, 'dang_chieu'),
 
-('Godzilla x Kong: Đế Chế Mới', 'Hai titan huyền thoại Godzilla và Kong phải hợp sức chống lại mối đe dọa khổng lồ ẩn sâu trong lòng đất, đe dọa sự tồn tại của cả loài người và quái vật.', 115, 'Adam Wingard', 'Rebecca Hall, Brian Tyree Henry, Dan Stevens', 'Hành động, Khoa học viễn tưởng', 'Mỹ', 'C13', '2024-03-29', 'https://image.tmdb.org/t/p/w500/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg', 6.5, 'dang_chieu'),
+('Godzilla x Kong: Đế Chế Mới', 'Hai titan huyền thoại Godzilla và Kong phải hợp sức chống lại mối đe dọa khổng lồ ẩn sâu trong lòng đất, đe dọa sự tồn tại của cả loài người và quái vật.', 115, 'Adam Wingard', 'Rebecca Hall, Brian Tyree Henry, Dan Stevens', 'Hành động, Khoa học viễn tưởng', 'Mỹ', 'C13', '2026-04-03', 'https://image.tmdb.org/t/p/w500/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg', 6.5, 'dang_chieu'),
 
-('Robot Hoang Dã', 'Robot Roz bị trôi dạt đến một hòn đảo hoang và phải học cách sinh tồn trong tự nhiên, trở thành mẹ nuôi của một chú ngỗng con mồ côi.', 102, 'Chris Sanders', 'Lupita Nyongo, Pedro Pascal, Kit Connor', 'Hoạt hình, Khoa học viễn tưởng, Gia đình', 'Mỹ', 'P', '2024-09-27', 'https://image.tmdb.org/t/p/w500/wTnV3PCVW5O92JMrFvvrRcV39RU.jpg', 8.2, 'dang_chieu'),
+('Robot Hoang Dã', 'Robot Roz bị trôi dạt đến một hòn đảo hoang và phải học cách sinh tồn trong tự nhiên, trở thành mẹ nuôi của một chú ngỗng con mồ côi.', 102, 'Chris Sanders', 'Lupita Nyongo, Pedro Pascal, Kit Connor', 'Hoạt hình, Khoa học viễn tưởng, Gia đình', 'Mỹ', 'P', '2026-04-03', 'https://image.tmdb.org/t/p/w500/wTnV3PCVW5O92JMrFvvrRcV39RU.jpg', 8.2, 'dang_chieu'),
 
-('Phù Thủy Xứ Oz', 'Câu chuyện về tình bạn giữa Elphaba và Glinda - hai phù thủy tại học viện phép thuật xứ Oz, trước khi một người trở thành Phù thủy Xấu xa và người kia thành Phù thủy Tốt lành.', 160, 'Jon M. Chu', 'Cynthia Erivo, Ariana Grande, Jeff Goldblum', 'Nhạc kịch, Giả tưởng', 'Mỹ', 'P', '2024-11-22', 'https://image.tmdb.org/t/p/w500/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg', 7.9, 'dang_chieu'),
+('Phù Thủy Xứ Oz', 'Câu chuyện về tình bạn giữa Elphaba và Glinda - hai phù thủy tại học viện phép thuật xứ Oz, trước khi một người trở thành Phù thủy Xấu xa và người kia thành Phù thủy Tốt lành.', 160, 'Jon M. Chu', 'Cynthia Erivo, Ariana Grande, Jeff Goldblum', 'Nhạc kịch, Giả tưởng', 'Mỹ', 'P', '2026-04-04', 'https://image.tmdb.org/t/p/w500/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg', 7.9, 'dang_chieu'),
 
-('Hành Trình Của Moana 2', 'Moana nhận được lời kêu gọi bí ẩn từ đại dương và phải lên đường tới vùng biển xa xôi của Châu Đại Dương, cùng với thủy thủ đoàn mới trong một chuyến phiêu lưu chưa từng có.', 100, 'David Derrick Jr.', 'Auliʻi Cravalho, Dwayne Johnson, Alan Tudyk', 'Hoạt hình, Phiêu lưu, Gia đình', 'Mỹ', 'P', '2024-11-27', 'https://image.tmdb.org/t/p/w500/aLVkiINlIeCkcZIzb7XHzPYgO6L.jpg', 7.0, 'dang_chieu'),
+('Hành Trình Của Moana 2', 'Moana nhận được lời kêu gọi bí ẩn từ đại dương và phải lên đường tới vùng biển xa xôi của Châu Đại Dương, cùng với thủy thủ đoàn mới trong một chuyến phiêu lưu chưa từng có.', 100, 'David Derrick Jr.', 'Auliʻi Cravalho, Dwayne Johnson, Alan Tudyk', 'Hoạt hình, Phiêu lưu, Gia đình', 'Mỹ', 'P', '2026-04-04', 'https://image.tmdb.org/t/p/w500/aLVkiINlIeCkcZIzb7XHzPYgO6L.jpg', 7.0, 'dang_chieu'),
 
-('Liên Minh Sấm Sét', 'Một nhóm phản anh hùng được chính phủ Mỹ tuyển mộ cho nhiệm vụ bí mật nguy hiểm. Họ phải chứng minh rằng mình có thể trở thành anh hùng thực sự.', 127, 'Jake Schreier', 'Florence Pugh, Sebastian Stan, David Harbour', 'Hành động, Phiêu lưu', 'Mỹ', 'C13', '2025-05-02', 'https://image.tmdb.org/t/p/w500/hqcexYHbiTBfDIdDWxrxPtVndBX.jpg', 7.3, 'sap_chieu'),
+('Liên Minh Sấm Sét', 'Một nhóm phản anh hùng được chính phủ Mỹ tuyển mộ cho nhiệm vụ bí mật nguy hiểm. Họ phải chứng minh rằng mình có thể trở thành anh hùng thực sự.', 127, 'Jake Schreier', 'Florence Pugh, Sebastian Stan, David Harbour', 'Hành động, Phiêu lưu', 'Mỹ', 'C13', '2026-04-18', 'https://image.tmdb.org/t/p/w500/hqcexYHbiTBfDIdDWxrxPtVndBX.jpg', 7.3, 'sap_chieu'),
 
-('Lật Mặt 8: Vòng Tay Nắng', 'Phần mới nhất trong series phim ăn khách của đạo diễn Lý Hải, tiếp tục khai thác những câu chuyện gia đình đầy cảm xúc và kịch tính.', 132, 'Lý Hải', 'Huy Khánh, Mạc Văn Khoa, Ốc Thanh Vân', 'Tâm lý, Gia đình, Hành động', 'Việt Nam', 'C13', '2025-04-30', 'https://image.tmdb.org/t/p/w500/5MRo3arvulO98v27OPO5DXA7UDy.jpg', 7.5, 'sap_chieu'),
+('Lật Mặt 8: Vòng Tay Nắng', 'Phần mới nhất trong series phim ăn khách của đạo diễn Lý Hải, tiếp tục khai thác những câu chuyện gia đình đầy cảm xúc và kịch tính.', 132, 'Lý Hải', 'Huy Khánh, Mạc Văn Khoa, Ốc Thanh Vân', 'Tâm lý, Gia đình, Hành động', 'Việt Nam', 'C13', '2026-04-25', 'https://image.tmdb.org/t/p/w500/5MRo3arvulO98v27OPO5DXA7UDy.jpg', 7.5, 'sap_chieu'),
 
-('Mai', 'Câu chuyện xoay quanh cuộc đời đầy biến cố của Mai - một cô gái mát-xa với quá khứ đau thương và cuộc tình éo le với Dương - một chàng trai đào hoa.', 131, 'Trấn Thành', 'Phương Anh Đào, Tuấn Trần, Trấn Thành', 'Tâm lý, Tình cảm', 'Việt Nam', 'C18', '2024-02-10', 'https://image.tmdb.org/t/p/w500/2nF8xD200rcDawuCg5ObxxqA2fC.jpg', 7.8, 'dang_chieu'),
+('Mai', 'Câu chuyện xoay quanh cuộc đời đầy biến cố của Mai - một cô gái mát-xa với quá khứ đau thương và cuộc tình éo le với Dương - một chàng trai đào hoa.', 131, 'Trấn Thành', 'Phương Anh Đào, Tuấn Trần, Trấn Thành', 'Tâm lý, Tình cảm', 'Việt Nam', 'C18', '2026-04-05', 'https://image.tmdb.org/t/p/w500/2nF8xD200rcDawuCg5ObxxqA2fC.jpg', 7.8, 'dang_chieu'),
 
-('Hành Tinh Khỉ: Vương Quốc Mới', 'Nhiều thế hệ sau triều đại của Caesar, loài khỉ giờ đã thống trị trong khi loài người sống trong bóng tối. Một nhà lãnh đạo khỉ mới xây dựng đế chế qua bạo lực.', 145, 'Wes Ball', 'Owen Teague, Freya Allan, Kevin Durand', 'Khoa học viễn tưởng, Hành động', 'Mỹ', 'C13', '2024-05-10', 'https://image.tmdb.org/t/p/w500/gKkl37BQuKTanygYQG1pyYgLVgf.jpg', 7.1, 'dang_chieu');
+('Hành Tinh Khỉ: Vương Quốc Mới', 'Nhiều thế hệ sau triều đại của Caesar, loài khỉ giờ đã thống trị trong khi loài người sống trong bóng tối. Một nhà lãnh đạo khỉ mới xây dựng đế chế qua bạo lực.', 145, 'Wes Ball', 'Owen Teague, Freya Allan, Kevin Durand', 'Khoa học viễn tưởng, Hành động', 'Mỹ', 'C13', '2026-04-05', 'https://image.tmdb.org/t/p/w500/gKkl37BQuKTanygYQG1pyYgLVgf.jpg', 7.1, 'dang_chieu');
 
 -- =====================================================
 -- 5. DỮ LIỆU MẪU - RẠP & PHÒNG CHIẾU
@@ -244,7 +244,7 @@ INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ke
 SELECT
   movie.id,
   room.id,
-  CURRENT_DATE + day_offset,
+  '2026-04-07'::date + day_offset,
   t.start_time,
   t.end_time,
   CASE WHEN t.start_time >= '18:00' THEN 90000 ELSE 75000 END

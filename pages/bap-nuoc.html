@@ -142,6 +142,40 @@
     }
 
     loadCombos();
+
+    // Mobile sticky bar
+    function createStickyBar() {
+      if (window.innerWidth <= 768 && !document.getElementById('mobileSticky')) {
+        const bar = document.createElement('div');
+        bar.id = 'mobileSticky';
+        bar.className = 'mobile-sticky-bar';
+        bar.innerHTML = `
+          <div>
+            <div class="sticky-label">Tổng cộng</div>
+            <div class="sticky-price" id="stickyTotal">0đ</div>
+          </div>
+          <button class="btn btn-primary" onclick="goToPayment()">Tiếp tục →</button>
+        `;
+        document.body.appendChild(bar);
+        document.body.classList.add('has-sticky-bar');
+      }
+    }
+    createStickyBar();
+    window.addEventListener('resize', createStickyBar);
+
+    // Patch updateSummary to also update sticky bar
+    const _origUpdateSummary = updateSummary;
+    updateSummary = function() {
+      _origUpdateSummary();
+      const stickyTotal = document.getElementById('stickyTotal');
+      if (stickyTotal) {
+        const comboTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
+          const combo = combos.find(c => c.id === parseInt(id));
+          return sum + (combo ? combo.gia * qty : 0);
+        }, 0);
+        stickyTotal.textContent = FORMAT_TIEN((booking.tongTienGhe || 0) + comboTotal);
+      }
+    };
   </script>
 </body>
 </html>

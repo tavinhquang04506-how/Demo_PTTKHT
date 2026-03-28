@@ -99,6 +99,8 @@
     if (!Auth.requireLogin()) throw 'err';
     if (Auth.getRole() !== 'quan_ly') { alert('Chỉ quản lý mới được truy cập'); window.location.href='/'; throw 'err'; }
 
+    const PAGE_SIZE = 15;
+
     // Greeting
     const user = Auth.getUser();
     const hour = new Date().getHours();
@@ -111,6 +113,24 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-' + tab).classList.add('active');
       btn.classList.add('active');
+    }
+
+    // Pagination helper
+    function renderPagination(totalItems, currentPage, onPageChange) {
+      const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+      if (totalPages <= 1) return '';
+      let html = '<div class="pagination">';
+      html += `<button ${currentPage <= 1 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage - 1})">‹</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== totalPages) {
+          if (i === 2 || i === totalPages - 1) html += '<span class="page-info">...</span>';
+          continue;
+        }
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="${onPageChange}(${i})">${i}</button>`;
+      }
+      html += `<button ${currentPage >= totalPages ? 'disabled' : ''} onclick="${onPageChange}(${currentPage + 1})">›</button>`;
+      html += '</div>';
+      return html;
     }
 
     async function loadStats() {
@@ -159,36 +179,63 @@
       </div>`;
     }
 
+    // ---- Showtimes with pagination ----
+    let allShowtimes = [];
     async function loadShowtimes() {
       const today = new Date().toISOString().split('T')[0];
       const { data } = await db.from('suat_chieu').select('*, phim(ten_phim), phong_chieu(ten_phong, rap(ten_rap))')
         .eq('ngay_chieu', today).order('gio_bat_dau');
-      const c = document.getElementById('showtimeTable');
-      if (!data||!data.length) { c.innerHTML='<div class="empty-state"><p>Không có suất chiếu hôm nay</p></div>'; return; }
-      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Giờ</th><th>Phim</th><th>Rạp</th><th>Phòng</th><th>Giá</th></tr></thead>
-        <tbody>${data.map(s => `<tr><td><strong>${FORMAT_GIO(s.gio_bat_dau)}</strong></td><td>${s.phim.ten_phim}</td>
-          <td>${s.phong_chieu.rap.ten_rap}</td><td>${s.phong_chieu.ten_phong}</td><td style="color:var(--secondary);font-weight:700;">${FORMAT_TIEN(s.gia_ve)}</td></tr>`).join('')}</tbody></table></div>`;
+      allShowtimes = data || [];
+      renderShowtimePage(1);
     }
+    window.renderShowtimePage = function(page) {
+      const c = document.getElementById('showtimeTable');
+      if (!allShowtimes.length) { c.innerHTML='<div class="empty-state"><p>Không có suất chiếu hôm nay</p></div>'; return; }
+      const start = (page - 1) * PAGE_SIZE;
+      const pageData = allShowtimes.slice(start, start + PAGE_SIZE);
+      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Giờ</th><th>Phim</th><th>Rạp</th><th>Phòng</th><th>Giá</th></tr></thead>
+        <tbody>${pageData.map(s => `<tr><td><strong>${FORMAT_GIO(s.gio_bat_dau)}</strong></td><td>${s.phim.ten_phim}</td>
+          <td>${s.phong_chieu.rap.ten_rap}</td><td>${s.phong_chieu.ten_phong}</td><td style="color:var(--secondary);font-weight:700;">${FORMAT_TIEN(s.gia_ve)}</td></tr>`).join('')}</tbody></table></div>
+        ${renderPagination(allShowtimes.length, page, 'renderShowtimePage')}`;
+    };
 
+    // ---- Movies with pagination ----
+    let allMovies = [];
     async function loadMovies() {
       const { data } = await db.from('phim').select('*').order('trang_thai').order('ten_phim');
-      const c = document.getElementById('movieTable');
-      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Phim</th><th>Thể loại</th><th>Thời lượng</th><th>Đánh giá</th><th>Trạng thái</th></tr></thead>
-        <tbody>${(data||[]).map(m => `<tr><td><strong>${m.ten_phim}</strong></td><td>${m.the_loai||''}</td><td>${m.thoi_luong} phút</td>
-          <td><span class="movie-rating">⭐ ${m.diem_danh_gia}</span></td>
-          <td><span class="status-badge ${m.trang_thai==='dang_chieu'?'status-da_thanh_toan':'status-cho_thanh_toan'}">${m.trang_thai==='dang_chieu'?'Đang chiếu':'Sắp chiếu'}</span></td></tr>`).join('')}</tbody></table></div>`;
+      allMovies = data || [];
+      renderMoviePage(1);
     }
+    window.renderMoviePage = function(page) {
+      const c = document.getElementById('movieTable');
+      const start = (page - 1) * PAGE_SIZE;
+      const pageData = allMovies.slice(start, start + PAGE_SIZE);
+      c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Phim</th><th>Thể loại</th><th>Thời lượng</th><th>Đánh giá</th><th>Trạng thái</th></tr></thead>
+        <tbody>${pageData.map(m => `<tr><td><strong>${m.ten_phim}</strong></td><td>${m.the_loai||''}</td><td>${m.thoi_luong} phút</td>
+          <td><span class="movie-rating">⭐ ${m.diem_danh_gia}</span></td>
+          <td><span class="status-badge ${m.trang_thai==='dang_chieu'?'status-da_thanh_toan':'status-cho_thanh_toan'}">${m.trang_thai==='dang_chieu'?'Đang chiếu':'Sắp chiếu'}</span></td></tr>`).join('')}</tbody></table></div>
+        ${renderPagination(allMovies.length, page, 'renderMoviePage')}`;
+    };
 
+    // ---- Recent Tickets with pagination ----
+    let allTickets = [];
     async function loadRecentTickets() {
       const { data } = await db.from('dat_ve').select('*, nguoi_dung(ho_ten), suat_chieu(phim(ten_phim))')
-        .order('created_at', { ascending: false }).limit(20);
+        .order('created_at', { ascending: false }).limit(100);
+      allTickets = data || [];
+      renderTicketPage(1);
+    }
+    window.renderTicketPage = function(page) {
       const c = document.getElementById('ticketTable');
+      const start = (page - 1) * PAGE_SIZE;
+      const pageData = allTickets.slice(start, start + PAGE_SIZE);
       c.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Mã vé</th><th>Khách hàng</th><th>Phim</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
-        <tbody>${(data||[]).map(d => `<tr><td style="color:var(--accent);font-weight:700;">${d.ma_dat_ve}</td>
+        <tbody>${pageData.map(d => `<tr><td style="color:var(--accent);font-weight:700;">${d.ma_dat_ve}</td>
           <td><strong>${d.nguoi_dung?.ho_ten||'N/A'}</strong></td><td>${d.suat_chieu?.phim?.ten_phim||'N/A'}</td>
           <td style="font-weight:700;">${FORMAT_TIEN(d.tong_tien)}</td>
-          <td><span class="status-badge status-${d.trang_thai}">${(TRANG_THAI_VE[d.trang_thai]||{ten:d.trang_thai}).ten}</span></td></tr>`).join('')}</tbody></table></div>`;
-    }
+          <td><span class="status-badge status-${d.trang_thai}">${(TRANG_THAI_VE[d.trang_thai]||{ten:d.trang_thai}).ten}</span></td></tr>`).join('')}</tbody></table></div>
+        ${renderPagination(allTickets.length, page, 'renderTicketPage')}`;
+    };
 
     loadStats();
     loadShowtimes();
