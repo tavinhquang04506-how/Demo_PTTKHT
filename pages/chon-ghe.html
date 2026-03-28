@@ -115,6 +115,7 @@
         .map(d => d.ghe_id);
 
       renderSeatMap();
+      if (typeof autoFitSeatMap === 'function') autoFitSeatMap();
     }
 
     function renderSeatMap() {
@@ -202,7 +203,7 @@
     // ===== PINCH TO ZOOM & PAN =====
     let scale = 1;
     let posX = 0, posY = 0;
-    const MIN_SCALE = 0.5, MAX_SCALE = 2;
+    const MIN_SCALE = 0.35, MAX_SCALE = 2;
 
     function applyTransform() {
       const el = document.getElementById('seatMapZoom');
@@ -211,19 +212,32 @@
 
     function zoomSeatMap(delta) {
       scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
-      if (scale <= 0.7) { posX = 0; posY = 0; } // Center when zoomed out
+      if (scale <= calcFitScale() + 0.05) { posX = 0; posY = 0; }
       applyTransform();
     }
 
+    function calcFitScale() {
+      const container = document.getElementById('seatMapContainer');
+      const seatMap = document.getElementById('seatMap');
+      if (!container || !seatMap || !seatMap.scrollWidth) return 0.5;
+      return Math.min(1, (container.clientWidth - 16) / seatMap.scrollWidth);
+    }
+
     function resetZoom() {
-      scale = window.innerWidth <= 768 ? 0.65 : 1;
+      scale = window.innerWidth <= 768 ? calcFitScale() : 1;
       posX = 0; posY = 0;
       applyTransform();
     }
 
-    // Initial zoom on mobile
-    if (window.innerWidth <= 768) {
-      setTimeout(() => { scale = 0.65; applyTransform(); }, 300);
+    // Auto-fit on mobile after seats load
+    function autoFitSeatMap() {
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          scale = calcFitScale();
+          posX = 0; posY = 0;
+          applyTransform();
+        }, 400);
+      }
     }
 
     // Touch gestures

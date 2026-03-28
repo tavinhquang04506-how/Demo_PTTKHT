@@ -810,16 +810,22 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   .movie-detail { grid-template-columns: 1fr; }
   .movie-detail-poster { max-width: 250px; margin: 0 auto; }
 
-  /* ---- Seat Map: horizontal scroll + smaller on mobile ---- */
-  .seat-map-container { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
-  .seat { width: 26px; height: 26px; font-size: 0.5rem; }
-  .seat-doi { width: 56px; }
-  .seat-row { gap: 2px; margin-bottom: 3px; }
-  .seat-row-label { font-size: 0.65rem; width: 18px; }
+  /* ---- Seat Map: zoom-to-fit on mobile (like CGV app) ---- */
+  .seat-map-container {
+    overflow: hidden; padding-bottom: 8px;
+    position: relative;
+  }
+  .seat-map-zoom {
+    transform-origin: top center;
+  }
+  .seat { width: 24px; height: 24px; font-size: 0.5rem; }
+  .seat-doi { width: 52px; }
+  .seat-row { gap: 2px; margin-bottom: 2px; justify-content: center; }
+  .seat-row-label { font-size: 0.6rem; width: 16px; }
   .seat-vip::after { font-size: 0.35rem; }
-  .seat-legend { flex-wrap: wrap; gap: 8px; font-size: 0.7rem; padding: 10px; }
-  .legend-color { width: 18px; height: 18px; }
-  .screen { padding: 8px; font-size: 0.7rem; margin-bottom: 16px; }
+  .seat-legend { flex-wrap: wrap; gap: 8px; font-size: 0.7rem; padding: 10px; justify-content: center; }
+  .legend-color { width: 16px; height: 16px; }
+  .screen { padding: 6px; font-size: 0.65rem; margin-bottom: 10px; }
 
   /* ---- Booking Sidebar ---- */
   .booking-layout { grid-template-columns: 1fr; }
