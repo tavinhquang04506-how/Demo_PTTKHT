@@ -1,7 +1,7 @@
 -- =====================================================
 -- HỆ THỐNG ĐẶT VÉ XEM PHIM TRỰC TUYẾN
 -- Supabase PostgreSQL Schema + Seed Data
--- 
+-- Phiên bản: 28/03/2026 (Cập nhật ngày chiếu 07/04/2026)
 -- HƯỚNG DẪN: Copy toàn bộ file này vào Supabase
 --   Dashboard → SQL Editor → New Query → Paste → Run
 -- =====================================================
@@ -237,7 +237,7 @@ SELECT
 FROM phong_chieu p, generate_series(1, 96) s;
 
 -- =====================================================
--- 7. DỮ LIỆU MẪU - SUẤT CHIẾU (7 ngày tới)
+-- 7. DỮ LIỆU MẪU - SUẤT CHIẾU (07/04 - 13/04/2026)
 -- =====================================================
 
 INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ket_thuc, gia_ve)
@@ -297,9 +297,9 @@ INSERT INTO voucher (ma_code, ten_voucher, loai_giam, gia_tri, dieu_kien_toi_thi
 -- =====================================================
 -- HOÀN TẤT! Kiểm tra dữ liệu:
 -- =====================================================
--- SELECT COUNT(*) FROM nguoi_dung;  -- 6 users
--- SELECT COUNT(*) FROM phim;         -- 12 movies
--- SELECT COUNT(*) FROM ghe;          -- 384 seats
--- SELECT COUNT(*) FROM suat_chieu;   -- ~350 showtimes
+-- SELECT COUNT(*) FROM nguoi_dung;  -- 6 users (3 khách, 2 NV, 1 QL)
+-- SELECT COUNT(*) FROM phim;         -- 12 movies (10 đang chiếu, 2 sắp chiếu)
+-- SELECT COUNT(*) FROM ghe;          -- 384 seats (96 ghế × 4 phòng)
+-- SELECT COUNT(*) FROM suat_chieu;   -- suất chiếu từ 07/04 - 13/04/2026
 -- SELECT COUNT(*) FROM combo;        -- 12 combos
 -- SELECT COUNT(*) FROM voucher;      -- 5 vouchers
