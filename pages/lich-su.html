@@ -41,11 +41,16 @@
         return;
       }
 
+      // Store QR data globally to avoid HTML escaping issues
+      window._qrData = {};
+      
       container.innerHTML = data.map(d => {
         const sc = d.suat_chieu;
         const gheList = d.chi_tiet_ve.map(c => `${c.ghe.hang_ghe}${c.ghe.so_ghe}`).join(', ');
         const statusInfo = TRANG_THAI_VE[d.trang_thai] || { ten: d.trang_thai, mau: '#718096' };
-        const qrInfo = JSON.stringify({
+        
+        // Store data in global object
+        window._qrData[d.ma_dat_ve] = {
           code: d.ma_dat_ve,
           phim: sc.phim.ten_phim,
           rap: sc.phong_chieu.rap.ten_rap + ' - ' + sc.phong_chieu.ten_phong,
@@ -53,7 +58,8 @@
           gio: sc.gio_bat_dau,
           ghe: gheList,
           tong: d.tong_tien
-        }).replace(/'/g, "\\'");
+        };
+        
         return `
         <div class="history-card">
           <img src="${sc.phim.poster_url}" alt="${sc.phim.ten_phim}" class="history-poster" onerror="posterFallback(this)">
@@ -67,15 +73,14 @@
           <div class="history-right">
             <span class="status-badge status-${d.trang_thai}">● ${statusInfo.ten}</span>
             <div class="history-code">${d.ma_dat_ve}</div>
-            ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${qrInfo}')">📱 Xem QR</button>` : ''}
+            ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${d.ma_dat_ve}')">📱 Xem QR</button>` : ''}
           </div>
         </div>`;
       }).join('');
     }
 
-    function showQR(infoStr) {
-      let info;
-      try { info = JSON.parse(infoStr); } catch(e) { info = { code: infoStr }; }
+    function showQR(code) {
+      const info = window._qrData && window._qrData[code] ? window._qrData[code] : { code: code };
       
       const qrText = `CINETICKET|${info.code}|${info.phim||''}|${info.rap||''}|${info.ngay||''}|${info.ghe||''}|${info.tong||0}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrText)}&bgcolor=ffffff&color=1a1a2e`;
