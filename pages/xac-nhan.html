@@ -106,9 +106,19 @@
       });
     }
 
-    // Generate QR Code
-    QRCode.toCanvas(document.getElementById('qrCanvas'), booking.maDatVe, {
-      width: 200, margin: 2, color: { dark: '#1a1a2e', light: '#ffffff' }
+    // Generate QR Code with full ticket info for demo
+    const qrData = [
+      `CineTicket - Vé Xem Phim`,
+      `Mã vé: ${booking.maDatVe}`,
+      `Phim: ${booking.phimTen || 'N/A'}`,
+      `Rạp: ${booking.rapTen || 'N/A'} - ${booking.phongTen || 'N/A'}`,
+      `Ngày: ${booking.ngayChieu || 'N/A'}`,
+      `Giờ: ${booking.gioBatDau || 'N/A'}`,
+      `Ghế: ${(booking.gheLabels||[]).join(', ')}`,
+      `Tổng: ${FORMAT_TIEN(booking.tongTien || 0)}`
+    ].join('\n');
+    QRCode.toCanvas(document.getElementById('qrCanvas'), qrData, {
+      width: 220, margin: 2, color: { dark: '#1a1a2e', light: '#ffffff' }
     });
 
     // Clear booking data

@@ -45,6 +45,15 @@
         const sc = d.suat_chieu;
         const gheList = d.chi_tiet_ve.map(c => `${c.ghe.hang_ghe}${c.ghe.so_ghe}`).join(', ');
         const statusInfo = TRANG_THAI_VE[d.trang_thai] || { ten: d.trang_thai, mau: '#718096' };
+        const qrInfo = JSON.stringify({
+          code: d.ma_dat_ve,
+          phim: sc.phim.ten_phim,
+          rap: sc.phong_chieu.rap.ten_rap + ' - ' + sc.phong_chieu.ten_phong,
+          ngay: sc.ngay_chieu,
+          gio: sc.gio_bat_dau,
+          ghe: gheList,
+          tong: d.tong_tien
+        }).replace(/'/g, "\\'");
         return `
         <div class="history-card">
           <img src="${sc.phim.poster_url}" alt="${sc.phim.ten_phim}" class="history-poster" onerror="posterFallback(this)">
@@ -58,24 +67,40 @@
           <div class="history-right">
             <span class="status-badge status-${d.trang_thai}">● ${statusInfo.ten}</span>
             <div class="history-code">${d.ma_dat_ve}</div>
-            ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${d.ma_dat_ve}')">📱 Xem QR</button>` : ''}
+            ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${qrInfo}')">📱 Xem QR</button>` : ''}
           </div>
         </div>`;
       }).join('');
     }
 
-    function showQR(code) {
+    function showQR(infoStr) {
+      let info;
+      try { info = JSON.parse(infoStr); } catch(e) { info = { code: infoStr }; }
+      
+      const qrContent = [
+        `CineTicket - Vé Xem Phim`,
+        `Mã vé: ${info.code}`,
+        `Phim: ${info.phim || 'N/A'}`,
+        `Rạp: ${info.rap || 'N/A'}`,
+        `Ngày: ${info.ngay || 'N/A'}`,
+        `Giờ: ${info.gio || 'N/A'}`,
+        `Ghế: ${info.ghe || 'N/A'}`,
+        `Tổng: ${info.tong ? FORMAT_TIEN(info.tong) : 'N/A'}`
+      ].join('\n');
+
       const modal = document.createElement('div');
       modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);';
       modal.onclick = () => modal.remove();
-      modal.innerHTML = `<div style="background:var(--surface-container);padding:32px;border-radius:var(--radius-lg);text-align:center;border:1px solid rgba(90,64,66,0.1);" onclick="event.stopPropagation()">
-        <h3 style="margin-bottom:8px;">Mã QR Vé</h3>
-        <p class="text-muted" style="margin-bottom:16px; font-family:monospace; letter-spacing:0.1em; color:var(--secondary)">${code}</p>
+      modal.innerHTML = `<div style="background:var(--surface-container);padding:32px;border-radius:var(--radius-lg);text-align:center;border:1px solid rgba(90,64,66,0.1);max-width:340px;width:90%;" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:4px;">🎬 Mã QR Vé</h3>
+        <p style="margin-bottom:4px; font-size:0.85rem; color:var(--text-muted);">${info.phim || ''}</p>
+        <p class="text-muted" style="margin-bottom:16px; font-family:monospace; letter-spacing:0.1em; color:var(--secondary)">${info.code}</p>
         <div class="qr-container"><canvas id="modalQR"></canvas></div>
-        <button class="btn btn-outline" style="margin-top:16px;" onclick="this.closest('div[style]').parentElement.remove()">Đóng</button>
+        <p style="margin-top:12px; font-size:0.75rem; color:var(--text-muted);">Xuất trình mã QR này tại quầy soát vé</p>
+        <button class="btn btn-outline" style="margin-top:12px;" onclick="this.closest('div[style]').parentElement.remove()">Đóng</button>
       </div>`;
       document.body.appendChild(modal);
-      QRCode.toCanvas(document.getElementById('modalQR'), code, { width: 200, color: { dark: '#1a1a2e', light: '#fff' } });
+      QRCode.toCanvas(document.getElementById('modalQR'), qrContent, { width: 220, color: { dark: '#1a1a2e', light: '#fff' } });
     }
 
     loadHistory();
