@@ -117,14 +117,26 @@
         .eq('ngay_chieu', date)
         .order('gio_bat_dau');
 
-      if (error || !data || !data.length) {
+      // Filter out past showtimes for today
+      const today = new Date().toISOString().split('T')[0];
+      let filtered = data || [];
+      if (date === today && filtered.length) {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        filtered = filtered.filter(s => {
+          const [h, m] = s.gio_bat_dau.split(':').map(Number);
+          return (h * 60 + m) > currentMinutes;
+        });
+      }
+
+      if (error || !filtered.length) {
         container.innerHTML = '<div class="empty-state"><span class="icon">😔</span><p>Không có suất chiếu nào vào ngày này</p></div>';
         return;
       }
 
       // Group by cinema
       const byCinema = {};
-      data.forEach(s => {
+      filtered.forEach(s => {
         const rapName = s.phong_chieu.rap.ten_rap;
         if (!byCinema[rapName]) byCinema[rapName] = [];
         byCinema[rapName].push(s);
