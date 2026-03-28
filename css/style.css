@@ -1083,3 +1083,40 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 .pagination button.active { background: var(--accent); color: white; border-color: var(--accent); }
 .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
 .pagination .page-info { font-size: 0.8rem; color: var(--text-muted); margin: 0 8px; }
+
+/* =====================================================
+   BACK BUTTON
+   ===================================================== */
+.btn-back {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: var(--radius-full);
+  background: var(--surface-container-high); border: 1px solid rgba(90,64,66,0.15);
+  color: var(--on-surface); font-size: 1.2rem; font-weight: 700;
+  text-decoration: none; flex-shrink: 0;
+  transition: var(--transition);
+}
+.btn-back:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* =====================================================
+   SEAT MAP ZOOM
+   ===================================================== */
+.seat-map-zoom {
+  transform-origin: center top;
+  transition: transform 0.2s ease;
+  touch-action: none;
+}
+.seat-zoom-controls {
+  display: flex; justify-content: center; gap: 8px;
+  padding: 12px 0 4px; 
+}
+.zoom-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-full);
+  border: 1px solid rgba(90,64,66,0.2); background: var(--surface-container-high);
+  color: var(--on-surface); font-size: 1.1rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.zoom-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+@media (min-width: 769px) {
+  .seat-zoom-controls { display: none; }
+}

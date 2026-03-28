@@ -16,16 +16,26 @@
         <span class="step">3<span class="step-label">Bắp nước</span></span><span class="step-line"></span>
         <span class="step">4<span class="step-label">Thanh toán</span></span>
       </div>
-      <div class="page-header" style="margin-bottom: 24px;">
-        <h1 class="page-title">🪑 Chọn Ghế Ngồi</h1>
-        <p id="showtimeInfo" class="page-subtitle"></p>
+      <div class="page-header" style="display:flex; align-items:center; gap:12px; margin-bottom: 24px;">
+        <a href="javascript:history.back()" class="btn-back" title="Quay lại">←</a>
+        <div>
+          <h1 class="page-title" style="margin:0;">🪑 Chọn Ghế Ngồi</h1>
+          <p id="showtimeInfo" class="page-subtitle" style="margin:4px 0 0;"></p>
+        </div>
       </div>
 
       <div class="booking-layout">
         <div>
-          <div class="seat-map-container">
+          <div class="seat-map-container" id="seatMapContainer">
             <div class="screen">MÀN HÌNH</div>
-            <div id="seatMap"></div>
+            <div class="seat-map-zoom" id="seatMapZoom">
+              <div id="seatMap"></div>
+            </div>
+            <div class="seat-zoom-controls">
+              <button class="zoom-btn" onclick="zoomSeatMap(-0.15)" title="Thu nhỏ">−</button>
+              <button class="zoom-btn" onclick="resetZoom()" title="Reset" style="font-size:0.7rem;">↺</button>
+              <button class="zoom-btn" onclick="zoomSeatMap(0.15)" title="Phóng to">+</button>
+            </div>
             <div class="seat-legend">
               <div class="legend-item"><div class="legend-color" style="background:var(--seat-empty)"></div> Thường</div>
               <div class="legend-item"><div class="legend-color" style="background:var(--seat-vip)"></div> ⭐ VIP</div>
@@ -188,6 +198,75 @@
     }
 
     loadData();
+
+    // ===== PINCH TO ZOOM & PAN =====
+    let scale = 1;
+    let posX = 0, posY = 0;
+    const MIN_SCALE = 0.5, MAX_SCALE = 2;
+
+    function applyTransform() {
+      const el = document.getElementById('seatMapZoom');
+      if (el) el.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+    }
+
+    function zoomSeatMap(delta) {
+      scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
+      if (scale <= 0.7) { posX = 0; posY = 0; } // Center when zoomed out
+      applyTransform();
+    }
+
+    function resetZoom() {
+      scale = window.innerWidth <= 768 ? 0.65 : 1;
+      posX = 0; posY = 0;
+      applyTransform();
+    }
+
+    // Initial zoom on mobile
+    if (window.innerWidth <= 768) {
+      setTimeout(() => { scale = 0.65; applyTransform(); }, 300);
+    }
+
+    // Touch gestures
+    (function() {
+      const container = document.getElementById('seatMapContainer');
+      if (!container) return;
+      let lastDist = 0, lastX = 0, lastY = 0, isDragging = false;
+
+      container.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          lastDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+        } else if (e.touches.length === 1 && scale > 0.75) {
+          isDragging = true;
+          lastX = e.touches[0].clientX - posX;
+          lastY = e.touches[0].clientY - posY;
+        }
+      }, { passive: false });
+
+      container.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const delta = (dist - lastDist) * 0.005;
+          scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
+          lastDist = dist;
+          if (scale <= 0.7) { posX = 0; posY = 0; }
+          applyTransform();
+        } else if (e.touches.length === 1 && isDragging && scale > 0.75) {
+          posX = e.touches[0].clientX - lastX;
+          posY = e.touches[0].clientY - lastY;
+          applyTransform();
+        }
+      }, { passive: false });
+
+      container.addEventListener('touchend', function() { isDragging = false; lastDist = 0; });
+    })();
   </script>
 </body>
 </html>
