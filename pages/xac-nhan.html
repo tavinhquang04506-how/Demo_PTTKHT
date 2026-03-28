@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xác Nhận Đặt Vé - CineTicket</title>
   <link rel="stylesheet" href="../css/style.css">`n  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
 </head>
 <body>
   <nav id="navbar"></nav>
@@ -36,7 +36,7 @@
           <div class="booking-code" id="bookingCode"></div>
 
           <div class="qr-container">
-            <canvas id="qrCanvas"></canvas>
+            <img id="qrImage" alt="QR Code" style="width:220px;height:220px;border-radius:8px;">
           </div>
 
           <div class="ticket-info">
@@ -106,20 +106,10 @@
       });
     }
 
-    // Generate QR Code with full ticket info for demo
-    const qrData = [
-      `CineTicket - Vé Xem Phim`,
-      `Mã vé: ${booking.maDatVe}`,
-      `Phim: ${booking.phimTen || 'N/A'}`,
-      `Rạp: ${booking.rapTen || 'N/A'} - ${booking.phongTen || 'N/A'}`,
-      `Ngày: ${booking.ngayChieu || 'N/A'}`,
-      `Giờ: ${booking.gioBatDau || 'N/A'}`,
-      `Ghế: ${(booking.gheLabels||[]).join(', ')}`,
-      `Tổng: ${FORMAT_TIEN(booking.tongTien || 0)}`
-    ].join('\n');
-    QRCode.toCanvas(document.getElementById('qrCanvas'), qrData, {
-      width: 220, margin: 2, color: { dark: '#1a1a2e', light: '#ffffff' }
-    });
+    // Generate QR Code using API (reliable, no library issues)
+    const qrText = `CINETICKET|${booking.maDatVe}|${booking.phimTen||''}|${booking.rapTen||''}|${booking.ngayChieu||''}|${(booking.gheLabels||[]).join(',')}|${booking.tongTien||0}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrText)}&bgcolor=ffffff&color=1a1a2e`;
+    document.getElementById('qrImage').src = qrUrl;
 
     // Clear booking data
     BookingStore.clear();
