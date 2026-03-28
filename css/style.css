@@ -758,66 +758,174 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 @media (max-width: 768px) {
   h1 { font-size: 1.6rem; }
   h2 { font-size: 1.3rem; }
+
+  /* ---- Hero ---- */
   .hero { min-height: 320px; padding: 0 16px; }
-  .hero h1 { font-size: 2rem; }
-  .hero p { font-size: 0.95rem; }
+  .hero h1 { font-size: 1.8rem; }
+  .hero p { font-size: 0.9rem; max-width: 100%; }
   .hero-actions { flex-direction: column; gap: 10px; }
   .hero-actions .btn { width: 100%; }
+  .hero-bg::after {
+    background: linear-gradient(to bottom, rgba(13,13,24,0.9) 0%, rgba(13,13,24,0.7) 50%, rgba(13,13,24,0.5) 100%);
+  }
+
+  /* ---- Nav Mobile Menu ---- */
   .nav-toggle { display: block; }
   .nav-menu {
     display: none; position: absolute; top: 68px; left: 0; right: 0;
-    background: rgba(13,13,24,0.95); backdrop-filter: blur(24px);
+    background: rgba(13,13,24,0.97); backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid rgba(90,64,66,0.15);
-    flex-direction: column; padding: 16px 20px; gap: 12px;
+    flex-direction: column; padding: 16px 20px; gap: 4px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   }
   .nav-menu.active { display: flex; }
-  .nav-user { flex-direction: column; align-items: stretch; }
+  .nav-menu .nav-link {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    text-align: center;
+  }
+  .nav-menu .nav-link:hover { background: rgba(233,69,96,0.08); }
+  .nav-user {
+    flex-direction: column; align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(90,64,66,0.15);
+    margin-top: 8px;
+    gap: 10px;
+  }
+  .nav-user .nav-avatar { width: 40px; height: 40px; }
+  .nav-user .btn-logout { width: 100%; text-align: center; }
+
+  /* ---- Movie Grid ---- */
   .movie-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .movie-section, .newsletter-section { padding: 40px 16px; }
+
+  /* ---- Movie Detail ---- */
   .movie-detail { grid-template-columns: 1fr; }
   .movie-detail-poster { max-width: 250px; margin: 0 auto; }
-  .booking-layout { grid-template-columns: 1fr; }
-  .booking-sidebar { position: static; }
+
+  /* ---- Seat Map: horizontal scroll ---- */
+  .seat-map-container { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+  .seat-map-container > div { min-width: 500px; }
   .seat { width: 28px; height: 28px; font-size: 0.55rem; }
   .seat-doi { width: 62px; }
   .seat-row { gap: 3px; }
   .seat-vip::after { font-size: 0.4rem; }
+  .seat-legend { flex-wrap: wrap; gap: 10px; font-size: 0.75rem; }
+
+  /* ---- Booking Sidebar ---- */
+  .booking-layout { grid-template-columns: 1fr; }
+  .booking-sidebar { position: static; }
+  .booking-sidebar .btn { white-space: normal; word-break: break-word; padding: 14px 20px; }
+  .summary-note { word-break: break-word; }
+
+  /* ---- Combo ---- */
   .combo-grid { grid-template-columns: 1fr; }
-  .footer-container { grid-template-columns: 1fr; gap: 24px; }
+  .combo-tabs { flex-wrap: wrap; }
+
+  /* ---- Payment ---- */
   .payment-methods { grid-template-columns: repeat(3, 1fr); }
-  .date-selector { gap: 6px; }
+
+  /* ---- Date Selector ---- */
+  .date-selector { gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
   .date-btn { min-width: 60px; padding: 8px 12px; }
-  .data-table { font-size: 0.85rem; }
-  .data-table th, .data-table td { padding: 10px 12px; }
+  .date-btn .day-num { font-size: 1rem; }
+
+  /* ---- Upcoming / Newsletter ---- */
   .upcoming-card { flex-direction: column; gap: 16px; }
   .upcoming-poster { width: 100%; height: 200px; }
   .upcoming-title { font-size: 1.5rem; }
   .newsletter-card { padding: 32px 20px; }
   .newsletter-form { flex-direction: column; }
+
+  /* ---- Confirmation ---- */
   .confirmation-actions { flex-direction: column; }
   .confirmation-actions .btn { width: 100%; }
+  .confirmation-title { font-size: 1.6rem; }
+  .confirmation-body { padding: 20px 16px 24px; }
+
+  /* ---- History ---- */
   .history-card { flex-direction: column; text-align: center; }
   .history-right { text-align: center; }
-  .staff-tabs { justify-content: center; }
+
+  /* ---- Staff ---- */
+  .staff-tabs { justify-content: center; flex-wrap: wrap; }
   .scan-result-grid { grid-template-columns: 1fr 1fr; }
+  .scan-result-footer { flex-direction: column; gap: 12px; align-items: stretch; }
+  .scan-result-footer .btn { width: 100%; }
+  .manual-input { flex-direction: column; }
+
+  /* ---- Manager Dashboard ---- */
+  .page-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .dashboard-date { font-size: 0.75rem; padding: 6px 12px; }
+  .tab-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 0; }
+  .tab-btn { white-space: nowrap; font-size: 0.8rem; padding: 10px 14px; flex-shrink: 0; }
+  .data-table { font-size: 0.8rem; }
+  .data-table th, .data-table td { padding: 10px 10px; white-space: nowrap; }
+  .dashboard-table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ---- Footer ---- */
+  .footer-container { grid-template-columns: 1fr; gap: 24px; }
+
+  /* ---- Ticket Info ---- */
   .ticket-info { grid-template-columns: 1fr; }
+
+  /* ---- Auth ---- */
+  .auth-container { margin: 20px 16px; padding: 28px 20px; }
 }
 
 @media (max-width: 480px) {
   .container { padding: 0 12px; }
   .movie-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* ---- Hero even smaller ---- */
+  .hero { min-height: 280px; }
+  .hero h1 { font-size: 1.5rem; }
+  .hero p { font-size: 0.85rem; margin-bottom: 20px; }
+
+  /* ---- Seat map smaller ---- */
   .seat { width: 24px; height: 24px; font-size: 0.5rem; }
   .seat-doi { width: 52px; }
   .seat-vip::after, .seat-doi::after { display: none; }
-  .auth-container { margin: 20px 12px; padding: 24px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .tab-nav { overflow-x: auto; flex-wrap: nowrap; }
+  .seat-row-label { font-size: 0.65rem; width: 18px; }
+
+  /* ---- Auth ---- */
+  .auth-container { margin: 16px 10px; padding: 20px 16px; }
+
+  /* ---- Stats ---- */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 16px; }
+  .stat-value { font-size: 1.4rem; }
+  .stat-label { font-size: 0.75rem; }
+
+  /* ---- Tabs ---- */
+  .tab-nav { gap: 0; }
+  .tab-btn { font-size: 0.75rem; padding: 8px 10px; }
+
+  /* ---- Payment ---- */
   .payment-methods { grid-template-columns: 1fr; }
-  .hero h1 { font-size: 1.6rem; }
+
+  /* ---- Steps ---- */
   .step-label { font-size: 0.6rem; }
   .step { width: 34px; height: 34px; font-size: 0.8rem; }
   .step-line { width: 40px; }
+
+  /* ---- Combo ---- */
   .combo-card { flex-direction: column; align-items: center; text-align: center; }
+  .combo-tab { padding: 8px 16px; font-size: 0.8rem; }
+
+  /* ---- Page title ---- */
+  .page-title { font-size: 1.5rem; }
+  .section-title { font-size: 1.2rem; }
+
+  /* ---- Data tables ---- */
+  .data-table { font-size: 0.75rem; }
+  .data-table th, .data-table td { padding: 8px 8px; }
+
+  /* ---- Scan Result ---- */
+  .scan-result-grid { grid-template-columns: 1fr; }
 }
 
 /* =====================================================
