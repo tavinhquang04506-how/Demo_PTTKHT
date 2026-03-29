@@ -199,87 +199,87 @@ INSERT INTO phim (ten_phim, mo_ta, thoi_luong, dao_dien, dien_vien, the_loai, qu
 ('Hành Tinh Khỉ: Vương Quốc Mới', 'Nhiều thế hệ sau triều đại của Caesar, loài khỉ giờ đã thống trị trong khi loài người sống trong bóng tối. Một nhà lãnh đạo khỉ mới xây dựng đế chế qua bạo lực.', 145, 'Wes Ball', 'Owen Teague, Freya Allan, Kevin Durand', 'Khoa học viễn tưởng, Hành động', 'Mỹ', 'C13', '2026-04-05', 'https://image.tmdb.org/t/p/w500/gKkl37BQuKTanygYQG1pyYgLVgf.jpg', 7.1, 'dang_chieu');
 
 -- =====================================================
--- 5. DỮ LIỆU MẪU - RẠP & PHÒNG CHIẾU
+-- 5. DỮ LIỆU MẪU - 5 RẠP CINESTAR
 -- =====================================================
 
 INSERT INTO rap (ten_rap, dia_chi, thanh_pho) VALUES
-('CineStar Quốc Thanh', '271 Nguyễn Trãi, Quận 1', 'TP. Hồ Chí Minh'),
-('CineStar Hai Bà Trưng', '135 Hai Bà Trưng, Quận 1', 'TP. Hồ Chí Minh');
-
-INSERT INTO phong_chieu (rap_id, ten_phong, loai_phong, tong_ghe) VALUES
-(1, 'Phòng 1', '2D', 96),
-(1, 'Phòng 2', '3D', 96),
-(2, 'Phòng 1', '2D', 96),
-(2, 'Phòng 2', 'IMAX', 96);
+('CineStar Quốc Thanh',     '271 Nguyễn Trãi, Quận 1',               'TP. Hồ Chí Minh'),
+('CineStar Hai Bà Trưng',   '135 Hai Bà Trưng, Quận 1',              'TP. Hồ Chí Minh'),
+('CineStar Sinh Viên',      'Lầu 3 TTTM Becamex, Thủ Dầu Một',      'Bình Dương'),
+('CineStar Lý Chính Thắng', '135 Lý Chính Thắng, Quận 3',            'TP. Hồ Chí Minh'),
+('CineStar Mỹ Tho',         '54 Ấp Bắc, Phường 4, TP. Mỹ Tho',      'Tiền Giang');
 
 -- =====================================================
--- 6. DỮ LIỆU MẪU - GHẾ (96 ghế × 4 phòng = 384)
--- Hàng A-D: Thường (48 ghế/phòng)
--- Hàng E-G: VIP +30,000đ (36 ghế/phòng)  
--- Hàng H: Đôi +50,000đ (12 ghế/phòng)
+-- 6. DỮ LIỆU MẪU - 3 PHÒNG CHIẾU / RẠP (15 phòng)
+-- =====================================================
+
+INSERT INTO phong_chieu (rap_id, ten_phong, loai_phong, tong_ghe) VALUES
+(1, 'Phòng 1', '2D', 96), (1, 'Phòng 2', '3D', 96), (1, 'Phòng 3', 'IMAX', 96),
+(2, 'Phòng 1', '2D', 96), (2, 'Phòng 2', '3D', 96), (2, 'Phòng 3', '4DX', 96),
+(3, 'Phòng 1', '2D', 96), (3, 'Phòng 2', '3D', 96), (3, 'Phòng 3', 'VIP', 96),
+(4, 'Phòng 1', '2D', 96), (4, 'Phòng 2', '3D', 96), (4, 'Phòng 3', 'IMAX', 96),
+(5, 'Phòng 1', '2D', 96), (5, 'Phòng 2', '3D', 96), (5, 'Phòng 3', 'VIP', 96);
+
+-- =====================================================
+-- 6b. GHẾ (96 ghế × 15 phòng = 1440 ghế)
+-- Hàng A-D: Thường | E-G: VIP +30k | H: Đôi +50k
 -- =====================================================
 
 INSERT INTO ghe (phong_chieu_id, hang_ghe, so_ghe, loai_ghe, gia_them)
-SELECT
-  p.id,
-  chr(65 + (s-1)/12),
-  ((s-1) % 12) + 1,
-  CASE
-    WHEN (s-1)/12 < 4 THEN 'thuong'
-    WHEN (s-1)/12 < 7 THEN 'vip'
-    ELSE 'doi'
-  END,
-  CASE
-    WHEN (s-1)/12 < 4 THEN 0
-    WHEN (s-1)/12 < 7 THEN 30000
-    ELSE 50000
-  END
+SELECT p.id, chr(65 + (s-1)/12), ((s-1) % 12) + 1,
+  CASE WHEN (s-1)/12 < 4 THEN 'thuong' WHEN (s-1)/12 < 7 THEN 'vip' ELSE 'doi' END,
+  CASE WHEN (s-1)/12 < 4 THEN 0 WHEN (s-1)/12 < 7 THEN 30000 ELSE 50000 END
 FROM phong_chieu p, generate_series(1, 96) s;
 
 -- =====================================================
--- 7. DỮ LIỆU MẪU - SUẤT CHIẾU (29/03 - 13/04/2026)
--- Mỗi phòng: 5 suất/ngày, mỗi suất chỉ 1 phim
--- Phim xoay vòng theo suất, không trùng giờ
+-- 7. SUẤT CHIẾU - 5 rạp, giờ lệch 15 phút
+-- 6 suất/phòng/ngày, 2 phim/phòng (xen kẽ)
+-- Ngày: 29-30/03, 07-15/04/2026
 -- =====================================================
 
 DO $$
 DECLARE
   phim_ids INT[];
-  phong_ids INT[];
-  gio_bat_dau TIME[] := ARRAY['09:30','13:00','15:30','18:00','20:30'];
-  gio_ket_thuc TIME[] := ARRAY['11:30','15:00','17:30','20:00','22:30'];
-  ngay_start DATE := '2026-03-29';
-  ngay_end DATE := '2026-04-13';
-  d DATE;
-  p_idx INT;
-  s_idx INT;
-  phim_counter INT := 0;
-  gia INT;
-  phim_id_now INT;
-  total_phim INT;
+  rap_ids INT[];
+  phong_data RECORD;
+  dates DATE[] := ARRAY[
+    '2026-03-29','2026-03-30',
+    '2026-04-07','2026-04-08','2026-04-09','2026-04-10',
+    '2026-04-11','2026-04-12','2026-04-13','2026-04-14','2026-04-15'
+  ];
+  base_starts TIME[] := ARRAY['09:00','11:30','14:00','16:30','19:00','21:30'];
+  stagger INT[] := ARRAY[0, 15, 30, 45, 60];
+  d DATE; d_idx INT; r_idx INT; rm_idx INT; s_idx INT;
+  total_phim INT; movie_offset INT; phim_now INT;
+  gio_start TIME; gio_end TIME; gia INT; phong_id_now INT;
+  phong_map INT[];
 BEGIN
-  SELECT ARRAY_AGG(id ORDER BY id) INTO phim_ids
-  FROM phim WHERE trang_thai = 'dang_chieu';
-  
-  SELECT ARRAY_AGG(id ORDER BY id) INTO phong_ids
-  FROM phong_chieu;
-  
+  SELECT ARRAY_AGG(id ORDER BY id) INTO phim_ids FROM phim WHERE trang_thai = 'dang_chieu';
+  SELECT ARRAY_AGG(id ORDER BY id) INTO rap_ids FROM rap;
   total_phim := array_length(phim_ids, 1);
-  
-  d := ngay_start;
-  WHILE d <= ngay_end LOOP
-    FOR p_idx IN 1..array_length(phong_ids, 1) LOOP
-      FOR s_idx IN 1..5 LOOP
-        phim_counter := phim_counter + 1;
-        phim_id_now := phim_ids[((phim_counter - 1) % total_phim) + 1];
-        IF gio_bat_dau[s_idx] >= '18:00' THEN gia := 90000;
-        ELSE gia := 75000;
-        END IF;
-        INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ket_thuc, gia_ve)
-        VALUES (phim_id_now, phong_ids[p_idx], d, gio_bat_dau[s_idx], gio_ket_thuc[s_idx], gia);
+  phong_map := ARRAY[]::INT[];
+  FOR r_idx IN 0..4 LOOP
+    FOR phong_data IN SELECT id FROM phong_chieu WHERE rap_id = rap_ids[r_idx+1] ORDER BY id LOOP
+      phong_map := array_append(phong_map, phong_data.id);
+    END LOOP;
+  END LOOP;
+  FOR d_idx IN 1..array_length(dates, 1) LOOP
+    d := dates[d_idx];
+    FOR r_idx IN 0..4 LOOP
+      FOR rm_idx IN 0..2 LOOP
+        phong_id_now := phong_map[r_idx * 3 + rm_idx + 1];
+        movie_offset := (r_idx * 2 + rm_idx * 2 + (d_idx-1) * 2) % total_phim;
+        FOR s_idx IN 0..5 LOOP
+          IF s_idx % 2 = 0 THEN phim_now := phim_ids[(movie_offset % total_phim) + 1];
+          ELSE phim_now := phim_ids[((movie_offset + 1) % total_phim) + 1]; END IF;
+          gio_start := base_starts[s_idx+1] + (stagger[r_idx+1] * INTERVAL '1 minute');
+          gio_end := gio_start + INTERVAL '2 hours';
+          IF gio_start >= '17:00' THEN gia := 90000; ELSE gia := 75000; END IF;
+          INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ket_thuc, gia_ve)
+          VALUES (phim_now, phong_id_now, d, gio_start, gio_end, gia);
+        END LOOP;
       END LOOP;
     END LOOP;
-    d := d + 1;
   END LOOP;
 END $$;
 
