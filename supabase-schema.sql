@@ -237,33 +237,51 @@ SELECT
 FROM phong_chieu p, generate_series(1, 96) s;
 
 -- =====================================================
--- 7. DỮ LIỆU MẪU - SUẤT CHIẾU (07/04 - 13/04/2026)
+-- 7. DỮ LIỆU MẪU - SUẤT CHIẾU (29/03 - 13/04/2026)
+-- Mỗi phòng: 5 suất/ngày, mỗi suất chỉ 1 phim
+-- Phim xoay vòng theo suất, không trùng giờ
 -- =====================================================
 
-INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ket_thuc, gia_ve)
-SELECT
-  movie.id,
-  room.id,
-  '2026-04-07'::date + day_offset,
-  t.start_time,
-  t.end_time,
-  CASE WHEN t.start_time >= '18:00' THEN 90000 ELSE 75000 END
-FROM
-  (SELECT id, thoi_luong, ROW_NUMBER() OVER (ORDER BY id) as rn
-   FROM phim WHERE trang_thai = 'dang_chieu') movie,
-  (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM phong_chieu) room,
-  generate_series(0, 6) day_offset,
-  (VALUES
-    ('09:30'::time, '11:30'::time),
-    ('13:00'::time, '15:00'::time),
-    ('15:30'::time, '17:30'::time),
-    ('18:00'::time, '20:00'::time),
-    ('20:30'::time, '22:30'::time)
-  ) AS t(start_time, end_time)
-WHERE
-  -- Mỗi phim chiếu ở 1-2 phòng, xoay vòng
-  (movie.rn % 4) + 1 = room.rn
-  OR ((movie.rn + 1) % 4) + 1 = room.rn;
+DO $$
+DECLARE
+  phim_ids INT[];
+  phong_ids INT[];
+  gio_bat_dau TIME[] := ARRAY['09:30','13:00','15:30','18:00','20:30'];
+  gio_ket_thuc TIME[] := ARRAY['11:30','15:00','17:30','20:00','22:30'];
+  ngay_start DATE := '2026-03-29';
+  ngay_end DATE := '2026-04-13';
+  d DATE;
+  p_idx INT;
+  s_idx INT;
+  phim_counter INT := 0;
+  gia INT;
+  phim_id_now INT;
+  total_phim INT;
+BEGIN
+  SELECT ARRAY_AGG(id ORDER BY id) INTO phim_ids
+  FROM phim WHERE trang_thai = 'dang_chieu';
+  
+  SELECT ARRAY_AGG(id ORDER BY id) INTO phong_ids
+  FROM phong_chieu;
+  
+  total_phim := array_length(phim_ids, 1);
+  
+  d := ngay_start;
+  WHILE d <= ngay_end LOOP
+    FOR p_idx IN 1..array_length(phong_ids, 1) LOOP
+      FOR s_idx IN 1..5 LOOP
+        phim_counter := phim_counter + 1;
+        phim_id_now := phim_ids[((phim_counter - 1) % total_phim) + 1];
+        IF gio_bat_dau[s_idx] >= '18:00' THEN gia := 90000;
+        ELSE gia := 75000;
+        END IF;
+        INSERT INTO suat_chieu (phim_id, phong_chieu_id, ngay_chieu, gio_bat_dau, gio_ket_thuc, gia_ve)
+        VALUES (phim_id_now, phong_ids[p_idx], d, gio_bat_dau[s_idx], gio_ket_thuc[s_idx], gia);
+      END LOOP;
+    END LOOP;
+    d := d + 1;
+  END LOOP;
+END $$;
 
 -- =====================================================
 -- 8. DỮ LIỆU MẪU - COMBO BẮP NƯỚC
