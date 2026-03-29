@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phương Thức Thanh Toán - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container" style="max-width:600px;">
+      <!-- Back + Title -->
+      <div class="subpage-header">
+        <a href="/pages/tai-khoan" class="subpage-back">← Quay lại</a>
+        <h1 class="page-title">💳 Phương Thức Thanh Toán</h1>
+        <p class="subpage-desc">Quản lý các phương thức thanh toán của bạn</p>
+      </div>
+
+      <!-- Saved Cards -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Thẻ đã lưu</h3>
+        </div>
+
+        <div class="payment-card-item active" id="card1">
+          <div class="payment-card-visual visa">
+            <div class="payment-card-chip"></div>
+            <div class="payment-card-number">•••• •••• •••• 4589</div>
+            <div class="payment-card-bottom">
+              <div>
+                <div class="payment-card-label">CHỦ THẺ</div>
+                <div class="payment-card-name" id="cardName1">NGUYEN VAN AN</div>
+              </div>
+              <div>
+                <div class="payment-card-label">HẾT HẠN</div>
+                <div class="payment-card-name">09/28</div>
+              </div>
+              <div class="payment-card-brand">VISA</div>
+            </div>
+          </div>
+          <div class="payment-card-actions">
+            <span class="payment-card-default">✓ Mặc định</span>
+            <button class="payment-card-delete" onclick="alert('Tính năng đang phát triển!')">Xóa</button>
+          </div>
+        </div>
+
+        <div class="payment-card-item" id="card2">
+          <div class="payment-card-visual mastercard">
+            <div class="payment-card-chip"></div>
+            <div class="payment-card-number">•••• •••• •••• 7821</div>
+            <div class="payment-card-bottom">
+              <div>
+                <div class="payment-card-label">CHỦ THẺ</div>
+                <div class="payment-card-name" id="cardName2">NGUYEN VAN AN</div>
+              </div>
+              <div>
+                <div class="payment-card-label">HẾT HẠN</div>
+                <div class="payment-card-name">03/27</div>
+              </div>
+              <div class="payment-card-brand">MC</div>
+            </div>
+          </div>
+          <div class="payment-card-actions">
+            <button class="payment-card-setdefault" onclick="alert('Tính năng đang phát triển!')">Đặt mặc định</button>
+            <button class="payment-card-delete" onclick="alert('Tính năng đang phát triển!')">Xóa</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- E-Wallets -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Ví điện tử</h3>
+        </div>
+
+        <div class="ewallet-list">
+          <div class="ewallet-item linked">
+            <div class="ewallet-info">
+              <div class="ewallet-icon" style="background:#1ec800;">M</div>
+              <div>
+                <div class="ewallet-name">Momo</div>
+                <div class="ewallet-status">Đã liên kết • 0912***789</div>
+              </div>
+            </div>
+            <button class="ewallet-action linked" onclick="alert('Tính năng đang phát triển!')">Hủy liên kết</button>
+          </div>
+          <div class="ewallet-item">
+            <div class="ewallet-info">
+              <div class="ewallet-icon" style="background:#0068ff;">Z</div>
+              <div>
+                <div class="ewallet-name">ZaloPay</div>
+                <div class="ewallet-status">Chưa liên kết</div>
+              </div>
+            </div>
+            <button class="ewallet-action" onclick="alert('Tính năng đang phát triển!')">Liên kết</button>
+          </div>
+          <div class="ewallet-item">
+            <div class="ewallet-info">
+              <div class="ewallet-icon" style="background:#ee4d2d;">S</div>
+              <div>
+                <div class="ewallet-name">ShopeePay</div>
+                <div class="ewallet-status">Chưa liên kết</div>
+              </div>
+            </div>
+            <button class="ewallet-action" onclick="alert('Tính năng đang phát triển!')">Liên kết</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add new -->
+      <button class="btn btn-primary btn-full btn-lg" style="margin-bottom:32px;" onclick="alert('Tính năng đang phát triển!')">
+        + Thêm phương thức thanh toán
+      </button>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+    const user = Auth.getUser();
+    const nameUpper = user.ho_ten.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    document.getElementById('cardName1').textContent = nameUpper;
+    document.getElementById('cardName2').textContent = nameUpper;
+  </script>
+</body>
+</html>

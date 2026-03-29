@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voucher & Khuyến Mãi - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container" style="max-width:600px;">
+      <!-- Back + Title -->
+      <div class="subpage-header">
+        <a href="/pages/tai-khoan" class="subpage-back">← Quay lại</a>
+        <h1 class="page-title">🎁 Voucher & Khuyến Mãi</h1>
+        <p class="subpage-desc">Mã giảm giá và ưu đãi dành cho bạn</p>
+      </div>
+
+      <!-- Voucher Input -->
+      <div class="subpage-section">
+        <div class="voucher-input-section">
+          <input type="text" class="form-input" id="voucherCode" placeholder="Nhập mã voucher...">
+          <button class="btn btn-primary" onclick="applyVoucher()">Áp dụng</button>
+        </div>
+      </div>
+
+      <!-- Active Vouchers -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Voucher khả dụng</h3>
+          <span class="subpage-badge">3</span>
+        </div>
+
+        <div class="voucher-card available">
+          <div class="voucher-left">
+            <div class="voucher-discount">20%</div>
+            <div class="voucher-type">GIẢM</div>
+          </div>
+          <div class="voucher-right">
+            <div class="voucher-title">Giảm 20% cho vé phim</div>
+            <div class="voucher-detail">Áp dụng cho tất cả phim đang chiếu</div>
+            <div class="voucher-meta">
+              <span class="voucher-expire">⏰ HSD: 15/04/2026</span>
+              <span class="voucher-min">Tối thiểu 100.000đ</span>
+            </div>
+            <div class="voucher-code-tag">CINE20</div>
+          </div>
+          <button class="voucher-use-btn" onclick="alert('Mã CINE20 đã được sao chép!')">Dùng ngay</button>
+        </div>
+
+        <div class="voucher-card available">
+          <div class="voucher-left combo">
+            <div class="voucher-discount">50K</div>
+            <div class="voucher-type">GIẢM</div>
+          </div>
+          <div class="voucher-right">
+            <div class="voucher-title">Giảm 50K combo bắp nước</div>
+            <div class="voucher-detail">Áp dụng khi mua combo bắp nước bất kỳ</div>
+            <div class="voucher-meta">
+              <span class="voucher-expire">⏰ HSD: 20/04/2026</span>
+              <span class="voucher-min">Tối thiểu 80.000đ</span>
+            </div>
+            <div class="voucher-code-tag">COMBO50</div>
+          </div>
+          <button class="voucher-use-btn" onclick="alert('Mã COMBO50 đã được sao chép!')">Dùng ngay</button>
+        </div>
+
+        <div class="voucher-card available">
+          <div class="voucher-left special">
+            <div class="voucher-discount">2x1</div>
+            <div class="voucher-type">MUA 1 TẶNG 1</div>
+          </div>
+          <div class="voucher-right">
+            <div class="voucher-title">Mua 1 Tặng 1 vé xem phim</div>
+            <div class="voucher-detail">Chỉ áp dụng suất chiếu trước 17:00</div>
+            <div class="voucher-meta">
+              <span class="voucher-expire">⏰ HSD: 10/04/2026</span>
+              <span class="voucher-min">Áp dụng ngày thường</span>
+            </div>
+            <div class="voucher-code-tag">BUY1GET1</div>
+          </div>
+          <button class="voucher-use-btn" onclick="alert('Mã BUY1GET1 đã được sao chép!')">Dùng ngay</button>
+        </div>
+      </div>
+
+      <!-- Used / Expired Vouchers -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Đã sử dụng / Hết hạn</h3>
+        </div>
+
+        <div class="voucher-card expired">
+          <div class="voucher-left">
+            <div class="voucher-discount">30%</div>
+            <div class="voucher-type">GIẢM</div>
+          </div>
+          <div class="voucher-right">
+            <div class="voucher-title">Giảm 30% vé phim cuối tuần</div>
+            <div class="voucher-detail">Đã sử dụng ngày 20/03/2026</div>
+            <div class="voucher-meta">
+              <span class="voucher-expire">Đã sử dụng</span>
+            </div>
+          </div>
+          <div class="voucher-used-stamp">ĐÃ DÙNG</div>
+        </div>
+
+        <div class="voucher-card expired">
+          <div class="voucher-left combo">
+            <div class="voucher-discount">25K</div>
+            <div class="voucher-type">GIẢM</div>
+          </div>
+          <div class="voucher-right">
+            <div class="voucher-title">Giảm 25K combo nhỏ</div>
+            <div class="voucher-detail">Hết hạn ngày 01/03/2026</div>
+            <div class="voucher-meta">
+              <span class="voucher-expire">Hết hạn</span>
+            </div>
+          </div>
+          <div class="voucher-used-stamp">HẾT HẠN</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+
+    function applyVoucher() {
+      const code = document.getElementById('voucherCode').value.trim();
+      if (!code) { showToast('Vui lòng nhập mã voucher', 'error'); return; }
+      showToast('Mã voucher không hợp lệ hoặc đã hết hạn', 'error');
+      document.getElementById('voucherCode').value = '';
+    }
+  </script>
+</body>
+</html>

@@ -28,12 +28,59 @@
             <div id="orderDetail" class="card" style="padding:20px;"></div>
           </div>
           <div class="section">
-            <h3 class="section-title">🏷️ Mã giảm giá</h3>
-            <div class="voucher-input">
-              <input type="text" class="form-input" id="voucherInput" placeholder="Nhập mã giảm giá (VD: CHAOBAN2026)">
-              <button class="btn btn-secondary" onclick="applyVoucher()">Áp dụng</button>
+            <h3 class="section-title">🏷️ Giảm giá</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Chọn một trong hai phương thức giảm giá bên dưới</p>
+
+            <!-- Discount Option Tabs -->
+            <div class="discount-tabs">
+              <button class="discount-tab active" id="tabVoucher" onclick="switchDiscountTab('voucher')">
+                🏷️ Mã giảm giá
+              </button>
+              <button class="discount-tab" id="tabPoints" onclick="switchDiscountTab('points')">
+                ⭐ Điểm thưởng
+              </button>
             </div>
-            <div id="voucherResult"></div>
+
+            <!-- Voucher Panel -->
+            <div class="discount-panel active" id="panelVoucher">
+              <div class="voucher-input">
+                <input type="text" class="form-input" id="voucherInput" placeholder="Nhập mã giảm giá (VD: CHAOBAN2026)">
+                <button class="btn btn-secondary" onclick="applyVoucher()">Áp dụng</button>
+              </div>
+              <div id="voucherResult"></div>
+            </div>
+
+            <!-- Points Panel -->
+            <div class="discount-panel" id="panelPoints">
+              <div class="points-info-card">
+                <div class="points-balance">
+                  <div>
+                    <div class="points-label">Điểm hiện có</div>
+                    <div class="points-value" id="currentPoints">0 điểm</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div class="points-label">Tương đương</div>
+                    <div class="points-equiv" id="pointsEquiv">0đ</div>
+                  </div>
+                </div>
+                <div class="points-slider-section">
+                  <label class="form-label" style="font-size:0.85rem;">Số điểm sử dụng</label>
+                  <input type="range" class="points-slider" id="pointsSlider" min="0" max="0" value="0" step="10" oninput="updatePointsUsage()">
+                  <div class="points-slider-labels">
+                    <span>0 điểm</span>
+                    <span id="maxPointsLabel">0 điểm</span>
+                  </div>
+                </div>
+                <div class="points-usage-summary">
+                  <span>Sử dụng: <strong id="pointsUsed">0 điểm</strong></span>
+                  <span>Giảm: <strong id="pointsDiscount" class="text-success">-0đ</strong></span>
+                </div>
+                <button class="btn btn-secondary btn-full" onclick="applyPoints()" id="applyPointsBtn">Áp dụng điểm thưởng</button>
+              </div>
+            </div>
+
+            <!-- Applied discount display -->
+            <div id="appliedDiscount"></div>
           </div>
           <div class="section">
             <h3 class="section-title">💳 Phương thức thanh toán</h3>
@@ -68,10 +115,13 @@
     if (!Auth.requireLogin()) throw 'err';
     const booking = BookingStore.get();
     if (!booking.suatChieuId) { window.location.href = '/'; throw 'err'; }
+    const user = Auth.getUser();
 
     let selectedPayment = null;
     let discount = 0;
     let voucherCode = null;
+    let discountType = null; // 'voucher' or 'points'
+    let pointsToUse = 0;
 
     function init() {
       const d = document.getElementById('orderDetail');
@@ -85,6 +135,67 @@
           ${booking.comboItems.map(c=>`<p class="text-muted" style="font-size:0.9rem;">  ${c.ten} x${c.soLuong} = ${FORMAT_TIEN(c.thanhTien)}</p>`).join('')}` : ''}
       `;
       document.getElementById('summary').innerHTML = `<p><strong>${booking.phimTen}</strong></p><p class="text-muted" style="font-size:0.85rem;">${(booking.gheLabels||[]).join(', ')}</p>`;
+
+      // Setup points
+      const userPoints = user.diem_thuong || 0;
+      const total = (booking.tongTienGhe||0) + (booking.tongTienCombo||0);
+      const maxUsablePoints = Math.min(userPoints, Math.floor(total / 100)); // 1 point = 100đ
+      document.getElementById('currentPoints').textContent = userPoints.toLocaleString('vi-VN') + ' điểm';
+      document.getElementById('pointsEquiv').textContent = FORMAT_TIEN(userPoints * 100);
+      const slider = document.getElementById('pointsSlider');
+      slider.max = maxUsablePoints;
+      document.getElementById('maxPointsLabel').textContent = maxUsablePoints.toLocaleString('vi-VN') + ' điểm';
+      if (maxUsablePoints === 0) {
+        document.getElementById('applyPointsBtn').disabled = true;
+        document.getElementById('applyPointsBtn').textContent = 'Không đủ điểm';
+      }
+
+      updateTotals();
+    }
+
+    function switchDiscountTab(tab) {
+      // Clear any applied discount when switching
+      clearDiscount();
+
+      document.getElementById('tabVoucher').classList.toggle('active', tab === 'voucher');
+      document.getElementById('tabPoints').classList.toggle('active', tab === 'points');
+      document.getElementById('panelVoucher').classList.toggle('active', tab === 'voucher');
+      document.getElementById('panelPoints').classList.toggle('active', tab === 'points');
+    }
+
+    function clearDiscount() {
+      discount = 0;
+      voucherCode = null;
+      discountType = null;
+      pointsToUse = 0;
+      document.getElementById('voucherInput').value = '';
+      document.getElementById('voucherResult').innerHTML = '';
+      document.getElementById('pointsSlider').value = 0;
+      document.getElementById('pointsUsed').textContent = '0 điểm';
+      document.getElementById('pointsDiscount').textContent = '-0đ';
+      document.getElementById('appliedDiscount').innerHTML = '';
+      document.getElementById('discountRow').style.display = 'none';
+      updateTotals();
+    }
+
+    function updatePointsUsage() {
+      const val = parseInt(document.getElementById('pointsSlider').value) || 0;
+      document.getElementById('pointsUsed').textContent = val.toLocaleString('vi-VN') + ' điểm';
+      document.getElementById('pointsDiscount').textContent = '-' + FORMAT_TIEN(val * 100);
+    }
+
+    function applyPoints() {
+      const val = parseInt(document.getElementById('pointsSlider').value) || 0;
+      if (val <= 0) { showToast('Vui lòng chọn số điểm muốn sử dụng', 'error'); return; }
+      discount = val * 100;
+      pointsToUse = val;
+      discountType = 'points';
+      voucherCode = null;
+      document.getElementById('appliedDiscount').innerHTML = `
+        <div class="voucher-applied" style="margin-top:14px;">
+          ✅ Sử dụng ${val.toLocaleString('vi-VN')} điểm - Giảm ${FORMAT_TIEN(discount)}
+          <button class="discount-clear" onclick="clearDiscount()">✕</button>
+        </div>`;
       updateTotals();
     }
 
@@ -96,6 +207,8 @@
       if (discount > 0) {
         document.getElementById('discountRow').style.display = 'flex';
         document.getElementById('dTotal').textContent = '-' + FORMAT_TIEN(discount);
+      } else {
+        document.getElementById('discountRow').style.display = 'none';
       }
       const grand = Math.max(0, seatT + comboT - discount);
       document.getElementById('gTotal').textContent = FORMAT_TIEN(grand);
@@ -113,13 +226,20 @@
       if (!code) return;
       const { data: v } = await db.from('voucher').select('*').eq('ma_code', code).eq('da_su_dung', false).single();
       const result = document.getElementById('voucherResult');
-      if (!v) { result.innerHTML = '<p style="color:var(--danger); margin-top:8px;">❌ Mã không hợp lệ hoặc đã sử dụng</p>'; discount = 0; voucherCode = null; updateTotals(); return; }
+      if (!v) { result.innerHTML = '<p style="color:var(--danger); margin-top:8px;">❌ Mã không hợp lệ hoặc đã sử dụng</p>'; discount = 0; voucherCode = null; discountType = null; updateTotals(); return; }
       const total = (booking.tongTienGhe||0) + (booking.tongTienCombo||0);
       if (total < v.dieu_kien_toi_thieu) { result.innerHTML = `<p style="color:var(--warning); margin-top:8px;">⚠️ Đơn tối thiểu ${FORMAT_TIEN(v.dieu_kien_toi_thieu)}</p>`; return; }
       if (v.loai_giam === 'phan_tram') discount = Math.round(total * v.gia_tri / 100);
       else discount = v.gia_tri;
       voucherCode = code;
-      result.innerHTML = `<div class="voucher-applied">✅ Áp dụng: ${v.ten_voucher} - Giảm ${FORMAT_TIEN(discount)}</div>`;
+      discountType = 'voucher';
+      pointsToUse = 0;
+      result.innerHTML = '';
+      document.getElementById('appliedDiscount').innerHTML = `
+        <div class="voucher-applied" style="margin-top:14px;">
+          ✅ Áp dụng: ${v.ten_voucher} - Giảm ${FORMAT_TIEN(discount)}
+          <button class="discount-clear" onclick="clearDiscount()">✕</button>
+        </div>`;
       updateTotals();
     }
 
@@ -127,7 +247,6 @@
       const btn = document.getElementById('payBtn');
       btn.disabled = true; btn.textContent = 'Đang xử lý...';
       try {
-        const user = Auth.getUser();
         const maDatVe = taoMaDatVe();
         const tongTien = Math.max(0, (booking.tongTienGhe||0) + (booking.tongTienCombo||0) - discount);
 
@@ -155,9 +274,12 @@
         // Mark voucher as used
         if (voucherCode) await db.from('voucher').update({da_su_dung: true}).eq('ma_code', voucherCode);
 
-        // Update loyalty points
-        const points = Math.floor(tongTien / 10000);
-        await db.from('nguoi_dung').update({ diem_thuong: user.diem_thuong + points }).eq('id', user.id);
+        // Update loyalty points (deduct used + add earned)
+        const earnedPoints = Math.floor(tongTien / 10000);
+        const newPoints = (user.diem_thuong || 0) - pointsToUse + earnedPoints;
+        await db.from('nguoi_dung').update({ diem_thuong: newPoints }).eq('id', user.id);
+        user.diem_thuong = newPoints;
+        localStorage.setItem('currentUser', JSON.stringify(user));
 
         BookingStore.save({ maDatVe, datVeId: dv.id, tongTien });
         showToast('Thanh toán thành công!', 'success');

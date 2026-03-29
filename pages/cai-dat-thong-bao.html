@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài Đặt Thông Báo - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container" style="max-width:600px;">
+      <div class="subpage-header">
+        <a href="/pages/tai-khoan" class="subpage-back">← Quay lại</a>
+        <h1 class="page-title">🔔 Cài Đặt Thông Báo</h1>
+        <p class="subpage-desc">Tùy chỉnh thông báo theo sở thích của bạn</p>
+      </div>
+
+      <!-- Push Notifications -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Thông báo đẩy</h3>
+        </div>
+
+        <div class="setting-toggle-list">
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Khuyến mãi & Ưu đãi</div>
+              <div class="setting-toggle-desc">Nhận thông báo khi có voucher hoặc ưu đãi mới</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Phim mới ra mắt</div>
+              <div class="setting-toggle-desc">Nhận thông báo khi có phim mới</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Nhắc lịch xem phim</div>
+              <div class="setting-toggle-desc">Nhắc nhở trước suất chiếu 1 giờ</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Trạng thái đơn hàng</div>
+              <div class="setting-toggle-desc">Cập nhật trạng thái đặt vé, thanh toán</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email Notifications -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Thông báo Email</h3>
+        </div>
+
+        <div class="setting-toggle-list">
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Bản tin hàng tuần</div>
+              <div class="setting-toggle-desc">Tổng hợp phim hay và ưu đãi trong tuần</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Xác nhận giao dịch</div>
+              <div class="setting-toggle-desc">Gửi email xác nhận khi đặt vé</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-item">
+            <div class="setting-toggle-info">
+              <div class="setting-toggle-name">Đánh giá phim</div>
+              <div class="setting-toggle-desc">Nhắc đánh giá phim sau khi xem</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full btn-lg" style="margin-bottom:32px;" onclick="showToast('Đã lưu cài đặt thông báo!', 'success')">
+        Lưu cài đặt
+      </button>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+  </script>
+</body>
+</html>

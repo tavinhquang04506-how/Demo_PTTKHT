@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tài Khoản - CineTicket</title>
+  <title>Cá Nhân - CineTicket</title>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 </head>
@@ -11,23 +11,113 @@
   <nav id="navbar"></nav>
   <main class="page">
     <div class="container" style="max-width:600px;">
-      <h1 class="page-title">👤 Tài Khoản Của Tôi</h1>
-      <div class="card" style="padding:30px; margin-top:24px;">
-        <div id="profileInfo"></div>
-        <div class="divider"></div>
-        <form onsubmit="updateProfile(event)">
-          <div class="form-group">
-            <label class="form-label">Họ và tên</label>
-            <input type="text" class="form-input" id="hoTen" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Số điện thoại</label>
-            <input type="tel" class="form-input" id="sdt">
-          </div>
-          <button type="submit" class="btn btn-primary btn-full">Cập nhật</button>
-        </form>
+      <h1 class="page-title">CÁ NHÂN</h1>
+
+      <!-- Reward Points Card -->
+      <div class="profile-reward-card">
+        <div class="reward-info">
+          <span class="reward-label">ĐIỂM THƯỞNG</span>
+          <div class="reward-points" id="rewardPoints">0 điểm</div>
+          <div class="reward-equivalent" id="rewardEquiv">= Giảm 0đ</div>
+        </div>
+        <div class="reward-badge" id="memberBadge">
+          <span>🎬</span> Thành viên
+        </div>
+        <div class="reward-progress">
+          <div class="reward-progress-bar" id="rewardBar" style="width: 60%"></div>
+        </div>
       </div>
-      <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="Auth.logout()">🚪 Đăng xuất</button>
+
+      <!-- Profile Avatar Section -->
+      <div class="profile-avatar-section">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <h2 class="profile-name" id="profileName">--</h2>
+        <p class="profile-email" id="profileEmail">--</p>
+        <a href="#" class="profile-edit-link" onclick="toggleEditForm(event)">Chỉnh sửa</a>
+      </div>
+
+      <!-- Edit Form (hidden by default) -->
+      <div class="profile-edit-form" id="editForm" style="display:none;">
+        <div class="profile-card">
+          <form onsubmit="updateProfile(event)">
+            <div class="form-group">
+              <label class="form-label">Họ và tên</label>
+              <input type="text" class="form-input" id="hoTen" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Số điện thoại</label>
+              <input type="tel" class="form-input" id="sdt">
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button type="button" class="btn btn-outline" style="flex:1;" onclick="toggleEditForm(event)">Hủy</button>
+              <button type="submit" class="btn btn-primary" style="flex:1;">Lưu thay đổi</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Menu Items -->
+      <div class="profile-menu">
+        <a href="/pages/thong-tin-ca-nhan" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">👤</span>
+            <span>Thông tin cá nhân</span>
+          </div>
+          <span class="profile-menu-arrow">›</span>
+        </a>
+        <a href="/pages/thanh-toan-ca-nhan" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">💳</span>
+            <span>Phương thức thanh toán</span>
+          </div>
+          <span class="profile-menu-arrow">›</span>
+        </a>
+        <a href="/pages/lich-su" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">🎫</span>
+            <span>Lịch sử đặt vé</span>
+          </div>
+          <span class="profile-menu-arrow">›</span>
+        </a>
+        <a href="/pages/voucher" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">🎁</span>
+            <span>Voucher & Khuyến mãi</span>
+          </div>
+          <div class="profile-menu-right">
+            <span class="profile-menu-badge">3</span>
+            <span class="profile-menu-arrow">›</span>
+          </div>
+        </a>
+        <a href="/pages/cai-dat-thong-bao" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">🔔</span>
+            <span>Cài đặt thông báo</span>
+          </div>
+          <span class="profile-menu-arrow">›</span>
+        </a>
+        <a href="#" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">🌐</span>
+            <span>Ngôn ngữ</span>
+          </div>
+          <div class="profile-menu-right">
+            <span class="profile-menu-value">Tiếng Việt</span>
+            <span class="profile-menu-arrow">›</span>
+          </div>
+        </a>
+        <a href="/pages/ho-tro" class="profile-menu-item">
+          <div class="profile-menu-left">
+            <span class="profile-menu-icon">❓</span>
+            <span>Hỗ trợ</span>
+          </div>
+          <span class="profile-menu-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- Logout Button -->
+      <button class="profile-logout-btn" onclick="Auth.logout()">ĐĂNG XUẤT</button>
+
     </div>
   </main>
   <footer id="footer"></footer>
@@ -38,20 +128,41 @@
   <script>
     if (!Auth.requireLogin()) throw 'err';
     const user = Auth.getUser();
-    document.getElementById('profileInfo').innerHTML = `
-      <div style="text-align:center; margin-bottom:20px;">
-        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--gold));display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 12px;">
-          ${user.ho_ten.charAt(0).toUpperCase()}
-        </div>
-        <h2>${user.ho_ten}</h2>
-        <p class="text-muted">${user.email}</p>
-        <div style="margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(245,166,35,0.15);border-radius:20px;">
-          <span style="color:var(--gold);font-weight:700;">⭐ ${user.diem_thuong} điểm</span>
-        </div>
-      </div>
-    `;
+
+    // Set avatar initials
+    const names = user.ho_ten.split(' ');
+    const initials = names.length >= 2
+      ? (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase()
+      : user.ho_ten.charAt(0).toUpperCase();
+    document.getElementById('profileAvatar').textContent = initials;
+    document.getElementById('profileName').textContent = user.ho_ten;
+    document.getElementById('profileEmail').textContent = user.email;
+
+    // Reward points
+    const points = user.diem_thuong || 0;
+    document.getElementById('rewardPoints').textContent = points.toLocaleString('vi-VN') + ' điểm';
+    document.getElementById('rewardEquiv').textContent = '= Giảm ' + (points * 100).toLocaleString('vi-VN') + 'đ';
+
+    // Member tier
+    let tierLabel = 'Thành viên';
+    let tierEmoji = '🎬';
+    if (points >= 1000) { tierLabel = 'Thành viên Vàng'; tierEmoji = '👑'; }
+    if (points >= 3000) { tierLabel = 'Thành viên Kim Cương'; tierEmoji = '💎'; }
+    document.getElementById('memberBadge').innerHTML = `<span>${tierEmoji}</span> ${tierLabel}`;
+
+    // Progress bar
+    const maxPoints = points < 1000 ? 1000 : points < 3000 ? 3000 : 5000;
+    document.getElementById('rewardBar').style.width = Math.min((points / maxPoints) * 100, 100) + '%';
+
+    // Form
     document.getElementById('hoTen').value = user.ho_ten;
     document.getElementById('sdt').value = user.so_dien_thoai || '';
+
+    function toggleEditForm(e) {
+      e.preventDefault();
+      const form = document.getElementById('editForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
 
     async function updateProfile(e) {
       e.preventDefault();
@@ -64,6 +175,14 @@
       user.so_dien_thoai = document.getElementById('sdt').value;
       localStorage.setItem('currentUser', JSON.stringify(user));
       showToast('Cập nhật thành công!', 'success');
+      // Update display
+      const names2 = user.ho_ten.split(' ');
+      const initials2 = names2.length >= 2
+        ? (names2[0].charAt(0) + names2[names2.length - 1].charAt(0)).toUpperCase()
+        : user.ho_ten.charAt(0).toUpperCase();
+      document.getElementById('profileAvatar').textContent = initials2;
+      document.getElementById('profileName').textContent = user.ho_ten;
+      document.getElementById('editForm').style.display = 'none';
     }
   </script>
 </body>

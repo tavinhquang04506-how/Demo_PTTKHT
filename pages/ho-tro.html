@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hỗ Trợ - CineTicket</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main class="page">
+    <div class="container" style="max-width:600px;">
+      <div class="subpage-header">
+        <a href="/pages/tai-khoan" class="subpage-back">← Quay lại</a>
+        <h1 class="page-title">❓ Trung Tâm Hỗ Trợ</h1>
+        <p class="subpage-desc">Chúng tôi luôn sẵn sàng giúp đỡ bạn</p>
+      </div>
+
+      <!-- Contact Options -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Liên hệ hỗ trợ</h3>
+        </div>
+
+        <div class="support-contact-grid">
+          <div class="support-contact-card">
+            <div class="support-contact-icon">📞</div>
+            <div class="support-contact-title">Hotline</div>
+            <div class="support-contact-value">1900 6789</div>
+            <div class="support-contact-note">8:00 - 22:00 hàng ngày</div>
+          </div>
+          <div class="support-contact-card">
+            <div class="support-contact-icon">💬</div>
+            <div class="support-contact-title">Chat trực tuyến</div>
+            <div class="support-contact-value">Live Chat</div>
+            <div class="support-contact-note">Phản hồi trong 5 phút</div>
+          </div>
+          <div class="support-contact-card">
+            <div class="support-contact-icon">📧</div>
+            <div class="support-contact-title">Email</div>
+            <div class="support-contact-value">hotro@cineticket.vn</div>
+            <div class="support-contact-note">Phản hồi trong 24 giờ</div>
+          </div>
+          <div class="support-contact-card">
+            <div class="support-contact-icon">📍</div>
+            <div class="support-contact-title">Địa chỉ</div>
+            <div class="support-contact-value">TP. Hồ Chí Minh</div>
+            <div class="support-contact-note">Quận 1, Đường Nguyễn Huệ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="subpage-section">
+        <div class="subpage-section-header">
+          <h3>Câu hỏi thường gặp</h3>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Làm sao để đặt vé xem phim?</span>
+              <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+              <p>Để đặt vé, bạn chọn phim muốn xem → chọn suất chiếu → chọn ghế → chọn combo (nếu có) → thanh toán. Vé sẽ được gửi qua email và hiển thị trong mục "Lịch sử đặt vé".</p>
+            </div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Tôi có thể hủy vé không?</span>
+              <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+              <p>Bạn có thể hủy vé trước giờ chiếu ít nhất 2 giờ. Tiền hoàn trả sẽ được chuyển về phương thức thanh toán ban đầu trong 3-5 ngày làm việc.</p>
+            </div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Điểm thưởng được tính như thế nào?</span>
+              <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+              <p>Mỗi 10.000đ chi tiêu sẽ nhận được 1 điểm thưởng. 1 điểm = 100đ giảm giá. Điểm có hiệu lực 12 tháng kể từ ngày tích lũy.</p>
+            </div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Các hạng thành viên có gì khác nhau?</span>
+              <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+              <p><strong>Thành viên:</strong> 0 - 999 điểm (ưu đãi cơ bản)<br>
+              <strong>Thành viên Vàng:</strong> 1.000 - 2.999 điểm (giảm thêm 5%, ưu tiên chọn ghế)<br>
+              <strong>Kim Cương:</strong> 3.000+ điểm (giảm thêm 10%, phòng VIP, combo miễn phí)</p>
+            </div>
+          </div>
+          <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <span>Làm sao để sử dụng voucher?</span>
+              <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+              <p>Vào mục "Voucher & Khuyến mãi" trong tài khoản, nhấn "Dùng ngay" để sao chép mã. Sau đó nhập mã tại bước thanh toán để nhận ưu đãi.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Info -->
+      <div class="subpage-section" style="margin-bottom:32px;">
+        <div class="support-app-info">
+          <div class="support-app-logo">🎬</div>
+          <div class="support-app-name">CineTicket</div>
+          <div class="support-app-version">Phiên bản 2.0.1</div>
+          <div class="support-app-links">
+            <a href="#">Điều khoản sử dụng</a>
+            <span>•</span>
+            <a href="#">Chính sách bảo mật</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer"></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw 'err';
+
+    function toggleFaq(el) {
+      el.classList.toggle('open');
+      const toggle = el.querySelector('.faq-toggle');
+      toggle.textContent = el.classList.contains('open') ? '−' : '+';
+    }
+  </script>
+</body>
+</html>
