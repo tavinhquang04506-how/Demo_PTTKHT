@@ -133,9 +133,10 @@
         rowSeats.forEach(s => {
           const isSold = soldSeatIds.includes(s.id);
           const isSelected = selectedSeats.some(ss => ss.id === s.id);
-          const seatClass = isSold ? 'seat-sold' : isSelected ? 'seat-selected' : `seat-${s.loai_ghe}`;
+          const typeClass = s.loai_ghe === 'vip' ? 'vip-seat' : s.loai_ghe === 'doi' ? 'couple-seat' : '';
+          const seatClass = isSold ? 'seat-sold' : isSelected ? 'seat-selected selected' : `seat-${s.loai_ghe}`;
           const width = s.loai_ghe === 'doi' ? 'seat-doi' : '';
-          html += `<button class="seat ${seatClass} ${width}" 
+          html += `<button class="seat ${seatClass} ${width} ${typeClass}" 
             ${isSold ? 'disabled' : `onclick="toggleSeat(${s.id})"`}
             title="${s.hang_ghe}${s.so_ghe} - ${LOAI_GHE[s.loai_ghe].ten}">${s.hang_ghe}${s.so_ghe}</button>`;
         });
@@ -154,8 +155,61 @@
         if (selectedSeats.length >= 8) { showToast('Tối đa 8 ghế', 'error'); return; }
         selectedSeats.push(seat);
       }
+      // Check single seat gap
+      checkSingleSeatGap();
       renderSeatMap();
       updateSummary();
+    }
+
+    // Ngăn ghế lẻ (single seat gap detection)
+    function checkSingleSeatGap() {
+      const rows = {};
+      seats.forEach(s => {
+        if (!rows[s.hang_ghe]) rows[s.hang_ghe] = [];
+        rows[s.hang_ghe].push(s);
+      });
+
+      let hasGap = false;
+      Object.keys(rows).forEach(row => {
+        const rowSeats = rows[row].sort((a,b) => a.so_ghe - b.so_ghe);
+        for (let i = 0; i < rowSeats.length; i++) {
+          const s = rowSeats[i];
+          // Skip if this seat is sold, selected, or couple
+          if (soldSeatIds.includes(s.id) || selectedSeats.some(ss => ss.id === s.id) || s.loai_ghe === 'doi') continue;
+          // Check if this empty seat has occupied/selected neighbors on BOTH sides
+          const prev = rowSeats[i - 1];
+          const next = rowSeats[i + 1];
+          const prevOccupied = prev && (soldSeatIds.includes(prev.id) || selectedSeats.some(ss => ss.id === prev.id));
+          const nextOccupied = next && (soldSeatIds.includes(next.id) || selectedSeats.some(ss => ss.id === next.id));
+          // Single gap: empty seat surrounded on both sides
+          if (prevOccupied && nextOccupied) {
+            hasGap = true;
+            break;
+          }
+        }
+        if (hasGap) return;
+      });
+
+      if (hasGap) {
+        showSeatGapWarning();
+      }
+    }
+
+    let gapWarningTimeout = null;
+    function showSeatGapWarning() {
+      // Remove previous warning
+      const existing = document.querySelector('.seat-gap-warning');
+      if (existing) existing.remove();
+      if (gapWarningTimeout) clearTimeout(gapWarningTimeout);
+
+      const warning = document.createElement('div');
+      warning.className = 'seat-gap-warning';
+      warning.innerHTML = '⚠️ Vui lòng không để trống 1 ghế lẻ giữa các ghế đã chọn/đã bán!';
+      document.body.appendChild(warning);
+      gapWarningTimeout = setTimeout(() => {
+        warning.classList.add('hide');
+        setTimeout(() => warning.remove(), 300);
+      }, 3500);
     }
 
     function updateSummary() {

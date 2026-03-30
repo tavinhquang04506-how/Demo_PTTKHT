@@ -21,6 +21,14 @@
         <a href="/pages/bap-nuoc" class="btn-back" title="Quay lại">←</a>
         <h1 class="page-title" style="margin:0;">💳 Thanh Toán</h1>
       </div>
+      <!-- Countdown giữ chỗ -->
+      <div class="countdown-section">
+        <div>
+          <div class="countdown-label">⏰ Thời gian giữ chỗ</div>
+          <div class="countdown-bar"><div class="countdown-bar-fill" id="countdownBar" style="width:100%"></div></div>
+        </div>
+        <div class="countdown-timer" id="countdownTimer">10:00</div>
+      </div>
       <div class="booking-layout">
         <div>
           <div class="section">
@@ -290,6 +298,40 @@
         btn.disabled = false; btn.textContent = 'Xác nhận thanh toán';
       }
     }
+    // ===== COUNTDOWN TIMER =====
+    const COUNTDOWN_TOTAL = 600; // 10 min in seconds
+    let countdownSeconds = COUNTDOWN_TOTAL;
+    let countdownInterval = null;
+
+    function startCountdown() {
+      const timerEl = document.getElementById('countdownTimer');
+      const barEl = document.getElementById('countdownBar');
+      if (!timerEl) return;
+
+      countdownInterval = setInterval(() => {
+        countdownSeconds--;
+        if (countdownSeconds <= 0) {
+          clearInterval(countdownInterval);
+          showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
+          setTimeout(() => { window.location.href = '/'; }, 2000);
+          return;
+        }
+        const min = Math.floor(countdownSeconds / 60);
+        const sec = countdownSeconds % 60;
+        timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        // Progress bar
+        if (barEl) barEl.style.width = ((countdownSeconds / COUNTDOWN_TOTAL) * 100) + '%';
+        // Urgency at 2 min
+        if (countdownSeconds <= 120) {
+          timerEl.classList.add('urgent');
+        } else {
+          timerEl.classList.remove('urgent');
+        }
+      }, 1000);
+    }
+
+    // Start on page load
+    startCountdown();
 
     init();
   </script>
