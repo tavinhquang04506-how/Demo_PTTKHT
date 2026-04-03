@@ -143,6 +143,65 @@ function formatVND(amount) {
   return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
 }
 
+// =====================================================
+// Seat Reservation Helpers
+// =====================================================
+
+// Cancel a pending reservation (async - for explicit user actions)
+async function cancelReservation(datVeId) {
+  if (!datVeId) return;
+  try {
+    await db.from('chi_tiet_ve').delete().eq('dat_ve_id', datVeId);
+    await db.from('dat_ve').delete().eq('id', datVeId).eq('trang_thai', 'cho_thanh_toan');
+  } catch(e) {
+    console.error('Cancel reservation error:', e);
+  }
+}
+
+// Cleanup expired reservations (older than 10 minutes)
+async function cleanupExpiredReservations() {
+  try {
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    // Find expired pending bookings
+    const { data: expired } = await db.from('dat_ve')
+      .select('id')
+      .eq('trang_thai', 'cho_thanh_toan')
+      .lt('created_at', tenMinAgo);
+    if (expired && expired.length > 0) {
+      const ids = expired.map(d => d.id);
+      await db.from('chi_tiet_ve').delete().in('dat_ve_id', ids);
+      await db.from('dat_ve').delete().in('id', ids);
+    }
+  } catch(e) {
+    console.error('Cleanup expired reservations error:', e);
+  }
+}
+
+// Cancel reservation via low-level fetch (for beforeunload - fire and forget)
+function cancelReservationSync(datVeId) {
+  if (!datVeId) return;
+  // Delete chi_tiet_ve first
+  fetch(`${SUPABASE_URL}/rest/v1/chi_tiet_ve?dat_ve_id=eq.${datVeId}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    keepalive: true
+  });
+  // Then delete dat_ve
+  fetch(`${SUPABASE_URL}/rest/v1/dat_ve?id=eq.${datVeId}&trang_thai=eq.cho_thanh_toan`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    keepalive: true
+  });
+}
+
 // Lưu dữ liệu đặt vé tạm thời
 const BookingStore = {
   save(data) {

@@ -122,7 +122,7 @@
   <script>
     if (!Auth.requireLogin()) throw 'err';
     const booking = BookingStore.get();
-    if (!booking.suatChieuId) { window.location.href = '/'; throw 'err'; }
+    if (!booking.suatChieuId || !booking.datVeId) { window.location.href = '/'; throw 'err'; }
     const user = Auth.getUser();
 
     let selectedPayment = null;
@@ -130,8 +130,25 @@
     let voucherCode = null;
     let discountType = null; // 'voucher' or 'points'
     let pointsToUse = 0;
+    let isPaymentComplete = false;
+
+    // ===== BACK BUTTON - Cancel reservation =====
+    async function goBackCancel() {
+      await cancelReservation(booking.datVeId);
+      BookingStore.clear();
+      window.location.href = `/pages/chon-ghe?suat=${booking.suatChieuId}`;
+    }
+
+    // ===== BEFOREUNLOAD - Cancel reservation on unexpected leave =====
+    window.addEventListener('beforeunload', () => {
+      if (isPaymentComplete) return;
+      cancelReservationSync(booking.datVeId);
+    });
 
     function init() {
+      // Update back button to cancel reservation
+      document.querySelector('.btn-back').setAttribute('href', 'javascript:goBackCancel()');
+
       const d = document.getElementById('orderDetail');
       d.innerHTML = `
         <p><strong style="font-size:1.1rem">${booking.phimTen}</strong></p>
@@ -251,31 +268,31 @@
       updateTotals();
     }
 
+    // ===== PAYMENT - UPDATE existing reservation =====
     async function processPayment() {
       const btn = document.getElementById('payBtn');
       btn.disabled = true; btn.textContent = 'Đang xử lý...';
       try {
-        const maDatVe = taoMaDatVe();
         const tongTien = Math.max(0, (booking.tongTienGhe||0) + (booking.tongTienCombo||0) - discount);
 
-        // Create booking
-        const { data: dv, error: dvErr } = await db.from('dat_ve').insert({
-          ma_dat_ve: maDatVe, nguoi_dung_id: user.id, suat_chieu_id: booking.suatChieuId,
-          tong_tien_ghe: booking.tongTienGhe||0, tong_tien_combo: booking.tongTienCombo||0,
-          giam_gia: discount, tong_tien: tongTien, trang_thai: 'da_thanh_toan',
-          phuong_thuc: selectedPayment, voucher_code: voucherCode, ma_qr: maDatVe
-        }).select().single();
+        // UPDATE existing dat_ve (change from cho_thanh_toan to da_thanh_toan)
+        const { error: dvErr } = await db.from('dat_ve').update({
+          tong_tien_ghe: booking.tongTienGhe||0,
+          tong_tien_combo: booking.tongTienCombo||0,
+          giam_gia: discount,
+          tong_tien: tongTien,
+          trang_thai: 'da_thanh_toan',
+          phuong_thuc: selectedPayment,
+          voucher_code: voucherCode,
+          ma_qr: booking.maDatVe
+        }).eq('id', booking.datVeId);
         if (dvErr) throw dvErr;
 
-        // Create seat details
-        const seatInserts = (booking.gheIds||[]).map(gheId => ({
-          dat_ve_id: dv.id, ghe_id: gheId, gia_ve: booking.giaVe
-        }));
-        if (seatInserts.length) await db.from('chi_tiet_ve').insert(seatInserts);
+        // chi_tiet_ve already exists from reservation creation - no need to insert
 
         // Create combo details
         const comboInserts = (booking.comboItems||[]).map(c => ({
-          dat_ve_id: dv.id, combo_id: c.comboId, so_luong: c.soLuong, thanh_tien: c.thanhTien
+          dat_ve_id: booking.datVeId, combo_id: c.comboId, so_luong: c.soLuong, thanh_tien: c.thanhTien
         }));
         if (comboInserts.length) await db.from('chi_tiet_combo').insert(comboInserts);
 
@@ -289,7 +306,10 @@
         user.diem_thuong = newPoints;
         localStorage.setItem('currentUser', JSON.stringify(user));
 
-        BookingStore.save({ maDatVe, datVeId: dv.id, tongTien });
+        // Mark payment as complete BEFORE navigating (prevents beforeunload cancellation)
+        isPaymentComplete = true;
+
+        BookingStore.save({ maDatVe: booking.maDatVe, datVeId: booking.datVeId, tongTien });
         showToast('Thanh toán thành công!', 'success');
         setTimeout(() => window.location.href = '/pages/xac-nhan', 800);
       } catch (err) {
@@ -298,10 +318,52 @@
         btn.disabled = false; btn.textContent = 'Xác nhận thanh toán';
       }
     }
-    // ===== COUNTDOWN TIMER =====
+
+    // ===== COUNTDOWN TIMER (from reservation created_at) =====
     const COUNTDOWN_TOTAL = 600; // 10 min in seconds
     let countdownSeconds = COUNTDOWN_TOTAL;
     let countdownInterval = null;
+
+    async function initCountdown() {
+      // Load reservation to get actual created_at
+      const { data: dv } = await db.from('dat_ve')
+        .select('created_at')
+        .eq('id', booking.datVeId)
+        .single();
+
+      if (!dv) {
+        showToast('Không tìm thấy đơn đặt vé', 'error');
+        BookingStore.clear();
+        setTimeout(() => window.location.href = '/', 1500);
+        return;
+      }
+
+      const createdAt = new Date(dv.created_at).getTime();
+      const expiresAt = createdAt + COUNTDOWN_TOTAL * 1000;
+      const now = Date.now();
+      const remaining = Math.floor((expiresAt - now) / 1000);
+
+      if (remaining <= 0) {
+        // Already expired
+        await cancelReservation(booking.datVeId);
+        BookingStore.clear();
+        showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
+        setTimeout(() => window.location.href = '/', 1500);
+        return;
+      }
+
+      countdownSeconds = remaining;
+
+      // Update initial display
+      const timerEl = document.getElementById('countdownTimer');
+      const barEl = document.getElementById('countdownBar');
+      const min = Math.floor(countdownSeconds / 60);
+      const sec = countdownSeconds % 60;
+      timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+      barEl.style.width = ((countdownSeconds / COUNTDOWN_TOTAL) * 100) + '%';
+
+      startCountdown();
+    }
 
     function startCountdown() {
       const timerEl = document.getElementById('countdownTimer');
@@ -312,8 +374,11 @@
         countdownSeconds--;
         if (countdownSeconds <= 0) {
           clearInterval(countdownInterval);
-          showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
-          setTimeout(() => { window.location.href = '/'; }, 2000);
+          cancelReservation(booking.datVeId).then(() => {
+            BookingStore.clear();
+            showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+          });
           return;
         }
         const min = Math.floor(countdownSeconds / 60);
@@ -330,8 +395,8 @@
       }, 1000);
     }
 
-    // Start on page load
-    startCountdown();
+    // Start countdown from reservation's actual time
+    initCountdown();
 
     init();
   </script>

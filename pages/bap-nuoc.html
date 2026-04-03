@@ -18,7 +18,7 @@
         <span class="step">4<span class="step-label">Thanh toán</span></span>
       </div>
       <div class="page-header" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <a href="javascript:history.back()" class="btn-back" title="Quay lại">←</a>
+        <a href="javascript:goBackToSeats()" class="btn-back" title="Quay lại">←</a>
         <h1 class="page-title" style="margin:0;">🍿 Chọn Bắp Nước & Combo</h1>
         <p class="page-subtitle">Thêm đồ ăn thức uống cho trải nghiệm xem phim trọn vẹn (không bắt buộc)</p>
       </div>
@@ -65,10 +65,84 @@
   <script>
     if (!Auth.requireLogin()) throw 'err';
     const booking = BookingStore.get();
-    if (!booking.suatChieuId) { window.location.href = '/'; throw 'err'; }
+    if (!booking.suatChieuId || !booking.datVeId) { window.location.href = '/'; throw 'err'; }
 
     let combos = [];
     let cart = {}; // { comboId: quantity }
+    let isNavigatingForward = false;
+
+    // ===== COUNTDOWN TIMER (from reservation created_at) =====
+    const COUNTDOWN_TOTAL = 600; // 10 min
+    let countdownInterval = null;
+
+    async function initCountdown() {
+      const { data: dv } = await db.from('dat_ve')
+        .select('created_at')
+        .eq('id', booking.datVeId)
+        .single();
+
+      if (!dv) {
+        showToast('Không tìm thấy đơn đặt vé', 'error');
+        BookingStore.clear();
+        setTimeout(() => window.location.href = '/', 1500);
+        return;
+      }
+
+      const createdAt = new Date(dv.created_at).getTime();
+      const expiresAt = createdAt + COUNTDOWN_TOTAL * 1000;
+      const now = Date.now();
+      let remaining = Math.floor((expiresAt - now) / 1000);
+
+      if (remaining <= 0) {
+        await cancelReservation(booking.datVeId);
+        BookingStore.clear();
+        showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
+        setTimeout(() => window.location.href = '/', 1500);
+        return;
+      }
+
+      // Add compact countdown UI
+      const countdownDiv = document.createElement('div');
+      countdownDiv.className = 'countdown-compact';
+      countdownDiv.innerHTML = `
+        <div class="countdown-label">⏰ Thời gian giữ chỗ</div>
+        <div class="countdown-timer" id="compactTimer">${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}</div>
+      `;
+      const bookingLayout = document.querySelector('.booking-layout');
+      bookingLayout.parentElement.insertBefore(countdownDiv, bookingLayout);
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          cancelReservation(booking.datVeId).then(() => {
+            BookingStore.clear();
+            showToast('⏰ Hết thời gian giữ chỗ! Vui lòng chọn lại.', 'error');
+            setTimeout(() => window.location.href = '/', 2000);
+          });
+          return;
+        }
+        const timerEl = document.getElementById('compactTimer');
+        if (timerEl) {
+          timerEl.textContent = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+          if (remaining <= 120) timerEl.classList.add('urgent');
+        }
+      }, 1000);
+    }
+
+    // ===== BACK BUTTON - Cancel reservation =====
+    async function goBackToSeats() {
+      isNavigatingForward = true; // Prevent beforeunload from firing
+      await cancelReservation(booking.datVeId);
+      BookingStore.clear();
+      window.location.href = `/pages/chon-ghe?suat=${booking.suatChieuId}`;
+    }
+
+    // ===== BEFOREUNLOAD - Cancel reservation on unexpected leave =====
+    window.addEventListener('beforeunload', () => {
+      if (isNavigatingForward) return;
+      cancelReservationSync(booking.datVeId);
+    });
 
     async function loadCombos() {
       const { data } = await db.from('combo').select('*').order('loai').order('gia');
@@ -129,6 +203,7 @@
     }
 
     function goToPayment() {
+      isNavigatingForward = true; // Prevent beforeunload from cancelling
       const comboItems = [];
       Object.entries(cart).forEach(([id, qty]) => {
         const combo = combos.find(c => c.id === parseInt(id));
@@ -142,6 +217,7 @@
     }
 
     loadCombos();
+    initCountdown();
 
     // Mobile sticky bar
     function createStickyBar() {

@@ -61,6 +61,16 @@
   </main>
   <footer id="footer"></footer>
 
+  <!-- Popup Modal -->
+  <div class="seat-modal-overlay" id="seatModalOverlay">
+    <div class="seat-modal">
+      <span class="seat-modal-icon" id="seatModalIcon">⚠️</span>
+      <h3 id="seatModalTitle">Thông báo</h3>
+      <p id="seatModalMessage">Nội dung thông báo</p>
+      <button class="btn btn-primary" id="seatModalBtn">Đã hiểu</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
@@ -75,7 +85,34 @@
     let soldSeatIds = [];
     let suatChieu = null;
 
+    // ===== MODAL POPUP FUNCTIONS =====
+    function showSeatModal(icon, title, message, btnText, btnAction) {
+      document.getElementById('seatModalIcon').textContent = icon;
+      document.getElementById('seatModalTitle').textContent = title;
+      document.getElementById('seatModalMessage').textContent = message;
+      const btn = document.getElementById('seatModalBtn');
+      btn.textContent = btnText || 'Đã hiểu';
+      btn.onclick = () => {
+        closeSeatModal();
+        if (btnAction) btnAction();
+      };
+      document.getElementById('seatModalOverlay').classList.add('active');
+    }
+
+    function closeSeatModal() {
+      document.getElementById('seatModalOverlay').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('seatModalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeSeatModal();
+    });
+
+    // ===== DATA LOADING =====
     async function loadData() {
+      // Cleanup expired reservations first
+      await cleanupExpiredReservations();
+
       // Load showtime info
       const { data: suat } = await db
         .from('suat_chieu')
@@ -104,15 +141,14 @@
         .order('hang_ghe').order('so_ghe');
       seats = seatData || [];
 
-      // Load sold seats
+      // Load sold + reserved seats (both da_thanh_toan and cho_thanh_toan)
       const { data: soldData } = await db
         .from('chi_tiet_ve')
-        .select('ghe_id, dat_ve(suat_chieu_id, trang_thai)')
+        .select('ghe_id, dat_ve!inner(suat_chieu_id, trang_thai)')
+        .eq('dat_ve.suat_chieu_id', parseInt(suatId))
         .in('dat_ve.trang_thai', ['da_thanh_toan', 'cho_thanh_toan']);
 
-      soldSeatIds = (soldData || [])
-        .filter(d => d.dat_ve && d.dat_ve.suat_chieu_id === parseInt(suatId))
-        .map(d => d.ghe_id);
+      soldSeatIds = (soldData || []).map(d => d.ghe_id);
 
       renderSeatMap();
       if (typeof autoFitSeatMap === 'function') autoFitSeatMap();
@@ -145,24 +181,73 @@
       map.innerHTML = html;
     }
 
-    function toggleSeat(seatId) {
-      const seat = seats.find(s => s.id === seatId);
-      if (!seat) return;
-      const idx = selectedSeats.findIndex(s => s.id === seatId);
-      if (idx >= 0) {
-        selectedSeats.splice(idx, 1);
-      } else {
-        if (selectedSeats.length >= 8) { showToast('Tối đa 8 ghế', 'error'); return; }
-        selectedSeats.push(seat);
+    // ===== TOGGLE SEAT (async with DB conflict check) =====
+    let isToggling = false; // Prevent double-click issues
+
+    async function toggleSeat(seatId) {
+      if (isToggling) return;
+      isToggling = true;
+
+      try {
+        const seat = seats.find(s => s.id === seatId);
+        if (!seat) return;
+
+        const idx = selectedSeats.findIndex(s => s.id === seatId);
+        if (idx >= 0) {
+          // Deselecting - always allowed
+          selectedSeats.splice(idx, 1);
+        } else {
+          // Selecting - check limits
+          if (selectedSeats.length >= 8) { showToast('Tối đa 8 ghế', 'error'); return; }
+
+          // Real-time DB check: is this seat still available?
+          const { data: conflictData } = await db
+            .from('chi_tiet_ve')
+            .select('ghe_id, dat_ve!inner(suat_chieu_id, trang_thai)')
+            .eq('ghe_id', seatId)
+            .eq('dat_ve.suat_chieu_id', parseInt(suatId))
+            .in('dat_ve.trang_thai', ['da_thanh_toan', 'cho_thanh_toan']);
+
+          if (conflictData && conflictData.length > 0) {
+            // Seat was taken by someone else since page loaded
+            soldSeatIds.push(seatId);
+            renderSeatMap();
+            showSeatModal(
+              '🚫',
+              'Ghế đã được đặt',
+              'Ghế ' + seat.hang_ghe + seat.so_ghe + ' đã được người khác chọn! Vui lòng tải lại trang để cập nhật sơ đồ ghế mới nhất.',
+              'Tải lại trang',
+              () => window.location.reload()
+            );
+            return;
+          }
+
+          // Temporarily add seat to check for gap
+          selectedSeats.push(seat);
+
+          // Check single seat gap
+          if (hasSingleSeatGap()) {
+            // Revert - remove the seat we just added
+            selectedSeats.pop();
+            showSeatModal(
+              '⚠️',
+              'Không thể chọn ghế này',
+              'Bạn không được bỏ trống 1 ghế lẻ bên cạnh! Vui lòng chọn ghế liền kề hoặc chọn ghế khác.',
+              'Đã hiểu'
+            );
+            return;
+          }
+        }
+
+        renderSeatMap();
+        updateSummary();
+      } finally {
+        isToggling = false;
       }
-      // Check single seat gap
-      checkSingleSeatGap();
-      renderSeatMap();
-      updateSummary();
     }
 
-    // Ngăn ghế lẻ (single seat gap detection)
-    function checkSingleSeatGap() {
+    // ===== SINGLE SEAT GAP DETECTION (returns boolean, no side effects) =====
+    function hasSingleSeatGap() {
       const rows = {};
       seats.forEach(s => {
         if (!rows[s.hang_ghe]) rows[s.hang_ghe] = [];
@@ -171,45 +256,29 @@
 
       let hasGap = false;
       Object.keys(rows).forEach(row => {
+        if (hasGap) return;
         const rowSeats = rows[row].sort((a,b) => a.so_ghe - b.so_ghe);
         for (let i = 0; i < rowSeats.length; i++) {
           const s = rowSeats[i];
-          // Skip if this seat is sold, selected, or couple
+          // Skip if this seat is sold, selected, or couple (couple seats are exempt from gap rule)
           if (soldSeatIds.includes(s.id) || selectedSeats.some(ss => ss.id === s.id) || s.loai_ghe === 'doi') continue;
-          // Check if this empty seat has occupied/selected neighbors on BOTH sides
+          // This seat is EMPTY - check if it would be isolated
           const prev = rowSeats[i - 1];
           const next = rowSeats[i + 1];
           const prevOccupied = prev && (soldSeatIds.includes(prev.id) || selectedSeats.some(ss => ss.id === prev.id));
           const nextOccupied = next && (soldSeatIds.includes(next.id) || selectedSeats.some(ss => ss.id === next.id));
-          // Single gap: empty seat surrounded on both sides
-          if (prevOccupied && nextOccupied) {
+          // Edge = first or last seat in the row (wall)
+          const isLeftEdge = !prev;
+          const isRightEdge = !next;
+          // Block if: sandwiched between occupied, OR wall+occupied on either side
+          if ((prevOccupied && nextOccupied) || (isLeftEdge && nextOccupied) || (isRightEdge && prevOccupied)) {
             hasGap = true;
             break;
           }
         }
-        if (hasGap) return;
       });
 
-      if (hasGap) {
-        showSeatGapWarning();
-      }
-    }
-
-    let gapWarningTimeout = null;
-    function showSeatGapWarning() {
-      // Remove previous warning
-      const existing = document.querySelector('.seat-gap-warning');
-      if (existing) existing.remove();
-      if (gapWarningTimeout) clearTimeout(gapWarningTimeout);
-
-      const warning = document.createElement('div');
-      warning.className = 'seat-gap-warning';
-      warning.innerHTML = '⚠️ Vui lòng không để trống 1 ghế lẻ giữa các ghế đã chọn/đã bán!';
-      document.body.appendChild(warning);
-      gapWarningTimeout = setTimeout(() => {
-        warning.classList.add('hide');
-        setTimeout(() => warning.remove(), 300);
-      }, 3500);
+      return hasGap;
     }
 
     function updateSummary() {
@@ -234,22 +303,76 @@
       btn.disabled = false;
     }
 
-    function goToCombo() {
-      const total = selectedSeats.reduce((sum, s) => sum + suatChieu.gia_ve + s.gia_them, 0);
-      BookingStore.save({
-        suatChieuId: parseInt(suatId),
-        gheIds: selectedSeats.map(s => s.id),
-        gheLabels: selectedSeats.map(s => `${s.hang_ghe}${s.so_ghe}`),
-        gheTypes: selectedSeats.map(s => s.loai_ghe),
-        tongTienGhe: total,
-        phimTen: suatChieu.phim.ten_phim,
-        rapTen: suatChieu.phong_chieu.rap.ten_rap,
-        phongTen: suatChieu.phong_chieu.ten_phong,
-        ngayChieu: suatChieu.ngay_chieu,
-        gioBatDau: suatChieu.gio_bat_dau,
-        giaVe: suatChieu.gia_ve
-      });
-      window.location.href = '/pages/bap-nuoc';
+    // ===== GO TO COMBO (creates reservation in DB) =====
+    async function goToCombo() {
+      const btn = document.getElementById('continueBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang xử lý...';
+
+      try {
+        const user = Auth.getUser();
+        const total = selectedSeats.reduce((sum, s) => sum + suatChieu.gia_ve + s.gia_them, 0);
+
+        // Final conflict check before reserving
+        const { data: finalConflicts } = await db
+          .from('chi_tiet_ve')
+          .select('ghe_id, dat_ve!inner(suat_chieu_id, trang_thai)')
+          .in('ghe_id', selectedSeats.map(s => s.id))
+          .eq('dat_ve.suat_chieu_id', parseInt(suatId))
+          .in('dat_ve.trang_thai', ['da_thanh_toan', 'cho_thanh_toan']);
+
+        if (finalConflicts && finalConflicts.length > 0) {
+          showToast('Một số ghế đã được người khác đặt. Đang tải lại...', 'error');
+          setTimeout(() => window.location.reload(), 1500);
+          return;
+        }
+
+        // Create reservation (dat_ve with cho_thanh_toan status)
+        const maDatVe = taoMaDatVe();
+        const { data: dv, error: dvErr } = await db.from('dat_ve').insert({
+          ma_dat_ve: maDatVe,
+          nguoi_dung_id: user.id,
+          suat_chieu_id: parseInt(suatId),
+          tong_tien_ghe: total,
+          tong_tien: total,
+          trang_thai: 'cho_thanh_toan'
+        }).select().single();
+
+        if (dvErr) throw dvErr;
+
+        // Create chi_tiet_ve records for locked seats
+        const seatInserts = selectedSeats.map(s => ({
+          dat_ve_id: dv.id,
+          ghe_id: s.id,
+          gia_ve: suatChieu.gia_ve + s.gia_them
+        }));
+        const { error: seatErr } = await db.from('chi_tiet_ve').insert(seatInserts);
+        if (seatErr) throw seatErr;
+
+        // Save to BookingStore
+        BookingStore.save({
+          suatChieuId: parseInt(suatId),
+          datVeId: dv.id,
+          maDatVe: maDatVe,
+          gheIds: selectedSeats.map(s => s.id),
+          gheLabels: selectedSeats.map(s => `${s.hang_ghe}${s.so_ghe}`),
+          gheTypes: selectedSeats.map(s => s.loai_ghe),
+          tongTienGhe: total,
+          phimTen: suatChieu.phim.ten_phim,
+          rapTen: suatChieu.phong_chieu.rap.ten_rap,
+          phongTen: suatChieu.phong_chieu.ten_phong,
+          ngayChieu: suatChieu.ngay_chieu,
+          gioBatDau: suatChieu.gio_bat_dau,
+          giaVe: suatChieu.gia_ve
+        });
+
+        window.location.href = '/pages/bap-nuoc';
+      } catch (err) {
+        console.error('Reservation error:', err);
+        showToast('Lỗi đặt ghế: ' + (err.message || 'Không xác định'), 'error');
+        btn.disabled = false;
+        btn.textContent = 'Tiếp tục → Chọn bắp nước';
+      }
     }
 
     loadData();

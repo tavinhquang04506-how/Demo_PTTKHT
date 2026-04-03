@@ -2083,3 +2083,118 @@ h4 { font-size: 1.1rem; font-weight: 700; }
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
+
+/* ---- Seat Warning / Conflict Modal ---- */
+.seat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+.seat-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.seat-modal {
+  background: var(--surface-container);
+  border: 1px solid rgba(90, 64, 66, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px 28px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  transform: scale(0.85) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.seat-modal-overlay.active .seat-modal {
+  transform: scale(1) translateY(0);
+}
+.seat-modal-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  display: block;
+  animation: modalIconPulse 0.6s ease;
+}
+@keyframes modalIconPulse {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.seat-modal h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--on-surface);
+}
+.seat-modal p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.seat-modal .btn {
+  min-width: 160px;
+}
+
+/* ---- Seat Gap Warning Toast ---- */
+.seat-gap-warning {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e94560, #c23152);
+  color: white;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.9rem;
+  z-index: 9998;
+  box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+  animation: slideUpFade 0.3s ease;
+}
+.seat-gap-warning.hide {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
+  transition: all 0.3s ease;
+}
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ---- Compact Countdown (for bap-nuoc page) ---- */
+.countdown-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--surface-container);
+  border: 1px solid rgba(90, 64, 66, 0.15);
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+}
+.countdown-compact .countdown-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.countdown-compact .countdown-timer {
+  font-family: var(--font-headline);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--accent);
+  margin-left: auto;
+}
+.countdown-compact .countdown-timer.urgent {
+  color: var(--danger);
+  animation: countdownBlink 0.8s ease-in-out infinite;
+}
