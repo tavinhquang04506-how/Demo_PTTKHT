@@ -2198,3 +2198,273 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   color: var(--danger);
   animation: countdownBlink 0.8s ease-in-out infinite;
 }
+
+/* ---- Cancel Ticket Modal ---- */
+.cancel-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cancel-modal-content {
+  background: var(--surface-container);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(90,64,66,0.15);
+  max-width: 520px; width: 92%;
+  max-height: 90vh; overflow-y: auto;
+  animation: slideUp 0.35s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.cancel-modal-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid rgba(90,64,66,0.1);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cancel-modal-header h3 {
+  font-family: var(--font-headline);
+  font-size: 1.3rem; font-weight: 800;
+}
+.cancel-modal-close {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface-container-high);
+  border: none; color: var(--text-muted);
+  font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.cancel-modal-close:hover {
+  background: rgba(233,69,96,0.15); color: var(--accent);
+}
+.cancel-modal-body {
+  padding: 20px 28px 28px;
+}
+
+/* Cancel Type Badge */
+.cancel-type-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 700;
+  margin-bottom: 20px;
+}
+.cancel-type-badge.hoan-100 {
+  background: rgba(78,204,163,0.12);
+  color: var(--success);
+  border: 1px solid rgba(78,204,163,0.3);
+}
+.cancel-type-badge.phat-30 {
+  background: rgba(245,166,35,0.12);
+  color: var(--gold);
+  border: 1px solid rgba(245,166,35,0.3);
+}
+
+/* Cancel movie info */
+.cancel-movie-info {
+  display: flex; gap: 14px;
+  padding: 16px; margin-bottom: 16px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+}
+.cancel-movie-info img {
+  width: 60px; height: 90px;
+  border-radius: 8px; object-fit: cover; flex-shrink: 0;
+}
+.cancel-movie-details h4 {
+  font-weight: 700; margin-bottom: 6px;
+}
+.cancel-movie-details p {
+  font-size: 0.85rem; color: var(--text-secondary);
+  margin-bottom: 3px;
+}
+
+/* Time remaining */
+.cancel-time-remaining {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; margin-bottom: 16px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-weight: 600;
+}
+.cancel-time-remaining .time-value {
+  color: var(--info); font-weight: 800;
+  font-family: var(--font-headline);
+}
+
+/* Refund breakdown table */
+.cancel-refund-table {
+  width: 100%; margin-bottom: 16px;
+}
+.cancel-refund-table .refund-row {
+  display: flex; justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(90,64,66,0.08);
+  font-size: 0.9rem;
+}
+.cancel-refund-table .refund-row:last-child {
+  border-bottom: none;
+}
+.cancel-refund-table .refund-row .label {
+  color: var(--text-secondary);
+}
+.cancel-refund-table .refund-row .value {
+  font-weight: 700;
+}
+.cancel-refund-table .refund-row .value.text-success {
+  color: var(--success);
+}
+.cancel-refund-table .refund-row .value.text-danger {
+  color: var(--accent);
+}
+.cancel-refund-table .refund-row .value.text-warning {
+  color: var(--gold);
+}
+
+/* Penalty / loss info */
+.cancel-loss-info {
+  padding: 12px 16px;
+  background: rgba(233,69,96,0.06);
+  border: 1px solid rgba(233,69,96,0.15);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.cancel-loss-info .loss-item {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.cancel-loss-info .loss-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Total refund */
+.cancel-refund-total {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 2px solid rgba(90,64,66,0.12);
+  margin-bottom: 8px;
+}
+.cancel-refund-total .total-label {
+  font-weight: 700; font-size: 1rem;
+}
+.cancel-refund-total .total-value {
+  font-size: 1.4rem; font-weight: 900;
+  color: var(--success);
+  font-family: var(--font-headline);
+}
+
+/* Payment method display */
+.cancel-payment-method {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; margin-bottom: 20px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem; color: var(--text-secondary);
+}
+.cancel-payment-method strong {
+  color: var(--on-surface);
+}
+
+/* Agree checkbox */
+.cancel-agree {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px; cursor: pointer;
+}
+.cancel-agree input[type="checkbox"] {
+  width: 18px; height: 18px; margin-top: 2px;
+  accent-color: var(--accent); flex-shrink: 0; cursor: pointer;
+}
+.cancel-agree label {
+  font-size: 0.85rem; color: var(--text-secondary);
+  cursor: pointer; line-height: 1.5;
+}
+
+/* Cancel action buttons */
+.cancel-actions {
+  display: flex; gap: 12px;
+}
+.cancel-actions .btn {
+  flex: 1;
+}
+.btn-danger {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-danger:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+}
+.btn-danger:disabled {
+  opacity: 0.5; cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Cancel ticket button on history card */
+.btn-cancel-ticket {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(233,69,96,0.4);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; transition: var(--transition);
+  margin-top: 8px;
+}
+.btn-cancel-ticket:hover {
+  background: rgba(233,69,96,0.1);
+  border-color: var(--accent);
+}
+
+/* Refund info on cancelled ticket card */
+.refund-info {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+.refund-info .refund-amount {
+  color: var(--success); font-weight: 700;
+}
+.refund-info .refund-fee {
+  color: var(--accent); font-weight: 600;
+  font-size: 0.78rem;
+}
+
+/* Responsive for cancel modal */
+@media (max-width: 600px) {
+  .cancel-modal-content {
+    width: 96%; max-height: 95vh;
+    border-radius: var(--radius);
+  }
+  .cancel-modal-header {
+    padding: 18px 20px 14px;
+  }
+  .cancel-modal-body {
+    padding: 16px 20px 24px;
+  }
+  .cancel-actions {
+    flex-direction: column;
+  }
+  .cancel-refund-total .total-value {
+    font-size: 1.2rem;
+  }
+}

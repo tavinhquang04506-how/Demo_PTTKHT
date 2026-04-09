@@ -109,6 +109,10 @@ CREATE TABLE dat_ve (
   phuong_thuc VARCHAR(20),
   voucher_code VARCHAR(50),
   ma_qr TEXT,
+  huy_luc TIMESTAMPTZ DEFAULT NULL,
+  phi_huy INTEGER DEFAULT 0,
+  tien_hoan INTEGER DEFAULT 0,
+  loai_huy VARCHAR(20) DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

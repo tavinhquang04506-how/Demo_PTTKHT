@@ -1,4 +1,4 @@
-﻿// =====================================================
+// =====================================================
 // Supabase Configuration
 // =====================================================
 const SUPABASE_URL = 'https://obblpuzqelnnvhsevifp.supabase.co';
@@ -23,6 +23,13 @@ const TRANG_THAI_VE = {
   da_thanh_toan: { ten: 'Đã thanh toán', mau: '#4ecca3' },
   da_su_dung: { ten: 'Đã sử dụng', mau: '#718096' },
   da_huy: { ten: 'Đã hủy', mau: '#e94560' }
+};
+
+// Chính sách hủy vé
+const CHINH_SACH_HUY = {
+  thoi_gian_phat: 2,       // giờ - hủy trong vòng 2h trước giờ chiếu sẽ bị phạt
+  phan_tram_phat: 30,      // % - phí phạt trên tiền ghế
+  hoan_combo: 100,          // % - luôn hoàn 100% combo
 };
 
 const FORMAT_TIEN = (so) => {

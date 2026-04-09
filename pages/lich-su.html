@@ -19,6 +19,10 @@
       <div id="historyList"><div class="loading"><div class="spinner"></div><p>Đang tải...</p></div></div>
     </div>
   </main>
+
+  <!-- Cancel Modal (injected by JS) -->
+  <div id="cancelModalContainer"></div>
+
   <footer id="footer"></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
@@ -27,6 +31,9 @@
   <script>
     if (!Auth.requireLogin()) throw 'err';
 
+    // =====================================================
+    // LOAD HISTORY
+    // =====================================================
     async function loadHistory() {
       const user = Auth.getUser();
       const { data } = await db
@@ -43,13 +50,15 @@
 
       // Store QR data globally to avoid HTML escaping issues
       window._qrData = {};
-      
+      // Store full booking data for cancel
+      window._bookings = {};
+
       container.innerHTML = data.map(d => {
         const sc = d.suat_chieu;
         const gheList = d.chi_tiet_ve.map(c => `${c.ghe.hang_ghe}${c.ghe.so_ghe}`).join(', ');
         const statusInfo = TRANG_THAI_VE[d.trang_thai] || { ten: d.trang_thai, mau: '#718096' };
-        
-        // Store data in global object
+
+        // Store data in global objects
         window._qrData[d.ma_dat_ve] = {
           code: d.ma_dat_ve,
           phim: sc.phim.ten_phim,
@@ -59,7 +68,21 @@
           ghe: gheList,
           tong: d.tong_tien
         };
-        
+
+        window._bookings[d.id] = d;
+
+        // Check if cancellation is possible
+        const canCancel = d.trang_thai === 'da_thanh_toan' && !isShowtimePassed(sc);
+
+        // Refund info for cancelled tickets
+        let refundHtml = '';
+        if (d.trang_thai === 'da_huy') {
+          refundHtml = `<div class="refund-info">
+            <div class="refund-amount">💰 Hoàn tiền: ${FORMAT_TIEN(d.tien_hoan || 0)}</div>
+            ${d.phi_huy > 0 ? `<div class="refund-fee">⚠️ Phí hủy: ${FORMAT_TIEN(d.phi_huy)}</div>` : ''}
+          </div>`;
+        }
+
         return `
         <div class="history-card">
           <img src="${sc.phim.poster_url}" alt="${sc.phim.ten_phim}" class="history-poster" onerror="posterFallback(this)">
@@ -74,14 +97,312 @@
             <span class="status-badge status-${d.trang_thai}">● ${statusInfo.ten}</span>
             <div class="history-code">${d.ma_dat_ve}</div>
             ${d.trang_thai === 'da_thanh_toan' ? `<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="showQR('${d.ma_dat_ve}')">📱 Xem QR</button>` : ''}
+            ${canCancel ? `<button class="btn-cancel-ticket" onclick="openCancelModal(${d.id})">❌ Hủy vé</button>` : ''}
+            ${refundHtml}
           </div>
         </div>`;
       }).join('');
     }
 
+    // =====================================================
+    // CHECK IF SHOWTIME HAS PASSED
+    // =====================================================
+    function isShowtimePassed(suatChieu) {
+      const showtime = new Date(suatChieu.ngay_chieu + 'T' + suatChieu.gio_bat_dau);
+      return new Date() >= showtime;
+    }
+
+    // =====================================================
+    // CALCULATE REFUND
+    // =====================================================
+    function tinhHoanTien(datVe) {
+      const sc = datVe.suat_chieu;
+      const showtime = new Date(sc.ngay_chieu + 'T' + sc.gio_bat_dau);
+      const now = new Date();
+
+      // Cannot cancel after showtime
+      if (now >= showtime) return null;
+
+      const msLeft = showtime - now;
+      const hoursLeft = msLeft / (1000 * 60 * 60);
+      const minsLeft = Math.floor(msLeft / (1000 * 60));
+
+      const tienGhe = datVe.tong_tien_ghe || 0;
+      const tienCombo = datVe.tong_tien_combo || 0;
+
+      let result = {
+        hoursLeft,
+        minsLeft,
+        tienGhe,
+        tienCombo,
+        phuongThuc: datVe.phuong_thuc,
+        voucherCode: datVe.voucher_code,
+        giamGia: datVe.giam_gia || 0
+      };
+
+      if (hoursLeft > CHINH_SACH_HUY.thoi_gian_phat) {
+        // HOÀN 100% — hủy sớm
+        result.loaiHuy = 'hoan_100';
+        result.phiHuy = 0;
+        result.tienHoanVe = tienGhe;
+        result.tienHoanCombo = tienCombo;
+        result.tongHoan = tienGhe + tienCombo;
+        result.hoanVoucher = true;
+        result.hoanDiem = true;
+      } else {
+        // PHẠT 30% — hủy sát giờ
+        result.loaiHuy = 'phat_30';
+        result.phiHuy = Math.round(tienGhe * CHINH_SACH_HUY.phan_tram_phat / 100);
+        result.tienHoanVe = tienGhe - result.phiHuy;
+        result.tienHoanCombo = tienCombo;
+        result.tongHoan = result.tienHoanVe + tienCombo;
+        result.hoanVoucher = false;
+        result.hoanDiem = false;
+      }
+
+      return result;
+    }
+
+    // =====================================================
+    // OPEN CANCEL MODAL
+    // =====================================================
+    function openCancelModal(datVeId) {
+      const datVe = window._bookings[datVeId];
+      if (!datVe) { showToast('Không tìm thấy vé', 'error'); return; }
+
+      const refund = tinhHoanTien(datVe);
+      if (!refund) {
+        showToast('Không thể hủy vé — đã quá giờ chiếu', 'error');
+        return;
+      }
+
+      const sc = datVe.suat_chieu;
+      const gheList = datVe.chi_tiet_ve.map(c => `${c.ghe.hang_ghe}${c.ghe.so_ghe}`).join(', ');
+
+      // Format time remaining
+      const hours = Math.floor(refund.minsLeft / 60);
+      const mins = refund.minsLeft % 60;
+      const timeStr = hours > 0 ? `${hours} giờ ${mins} phút` : `${mins} phút`;
+
+      // Payment method name
+      const ptttName = {
+        'momo': 'Ví MoMo',
+        'zalopay': 'ZaloPay',
+        'vnpay': 'VNPay',
+        'the': 'Thẻ ngân hàng'
+      }[refund.phuongThuc] || refund.phuongThuc || 'Online';
+
+      // Build loss info (items lost when penalty applies)
+      let lossHtml = '';
+      if (refund.loaiHuy === 'phat_30') {
+        let lossItems = [];
+        lossItems.push(`<div class="loss-item">❌ Phí hủy vé: <strong>${FORMAT_TIEN(refund.phiHuy)}</strong> (30% tiền ghế)</div>`);
+        if (refund.voucherCode) {
+          lossItems.push(`<div class="loss-item">❌ Mã giảm giá <strong>${refund.voucherCode}</strong> — không được hoàn lại</div>`);
+        }
+        if (refund.giamGia > 0 && !refund.voucherCode) {
+          lossItems.push(`<div class="loss-item">❌ Điểm thưởng đã dùng — không được hoàn lại</div>`);
+        }
+        lossHtml = `<div class="cancel-loss-info">${lossItems.join('')}</div>`;
+      }
+
+      // Build voucher/points restore info (when full refund)
+      let restoreHtml = '';
+      if (refund.loaiHuy === 'hoan_100') {
+        let restoreItems = [];
+        if (refund.voucherCode) {
+          restoreItems.push(`<div class="refund-row"><span class="label">🏷️ Voucher ${refund.voucherCode}</span><span class="value text-success">Khôi phục</span></div>`);
+        }
+        if (refund.giamGia > 0 && !refund.voucherCode) {
+          restoreItems.push(`<div class="refund-row"><span class="label">⭐ Điểm thưởng đã dùng</span><span class="value text-success">Hoàn lại</span></div>`);
+        }
+        restoreHtml = restoreItems.join('');
+      }
+
+      const modalHtml = `
+        <div class="cancel-modal" id="cancelModal" onclick="closeCancelModal(event)">
+          <div class="cancel-modal-content" onclick="event.stopPropagation()">
+            <div class="cancel-modal-header">
+              <h3>🚫 Hủy Vé Xem Phim</h3>
+              <button class="cancel-modal-close" onclick="closeCancelModal()">&times;</button>
+            </div>
+            <div class="cancel-modal-body">
+              <!-- Type Badge -->
+              <div class="cancel-type-badge ${refund.loaiHuy === 'hoan_100' ? 'hoan-100' : 'phat-30'}">
+                ${refund.loaiHuy === 'hoan_100' ? '✅ Hoàn tiền 100%' : '⚠️ Phạt 30% phí hủy vé'}
+              </div>
+
+              <!-- Movie Info -->
+              <div class="cancel-movie-info">
+                <img src="${sc.phim.poster_url}" alt="${sc.phim.ten_phim}" onerror="posterFallback(this)">
+                <div class="cancel-movie-details">
+                  <h4>${sc.phim.ten_phim}</h4>
+                  <p>📍 ${sc.phong_chieu.rap.ten_rap} · ${sc.phong_chieu.ten_phong}</p>
+                  <p>📅 ${FORMAT_NGAY(sc.ngay_chieu)} · ${FORMAT_GIO(sc.gio_bat_dau)}</p>
+                  <p>🪑 Ghế: <strong style="color:var(--secondary)">${gheList}</strong></p>
+                </div>
+              </div>
+
+              <!-- Time Remaining -->
+              <div class="cancel-time-remaining">
+                ⏰ Còn <span class="time-value">${timeStr}</span> trước giờ chiếu
+              </div>
+
+              <!-- Refund Breakdown -->
+              <div class="cancel-refund-table">
+                <div class="refund-row">
+                  <span class="label">🎟️ Tiền vé (ghế)</span>
+                  <span class="value">${FORMAT_TIEN(refund.tienGhe)}</span>
+                </div>
+                <div class="refund-row">
+                  <span class="label">↳ Hoàn vé (${refund.loaiHuy === 'hoan_100' ? '100%' : '70%'})</span>
+                  <span class="value text-success">+${FORMAT_TIEN(refund.tienHoanVe)}</span>
+                </div>
+                ${refund.phiHuy > 0 ? `
+                <div class="refund-row">
+                  <span class="label">↳ Phí hủy (30%)</span>
+                  <span class="value text-danger">-${FORMAT_TIEN(refund.phiHuy)}</span>
+                </div>` : ''}
+                ${refund.tienCombo > 0 ? `
+                <div class="refund-row">
+                  <span class="label">🍿 Tiền bắp nước</span>
+                  <span class="value">${FORMAT_TIEN(refund.tienCombo)}</span>
+                </div>
+                <div class="refund-row">
+                  <span class="label">↳ Hoàn bắp nước (100%)</span>
+                  <span class="value text-success">+${FORMAT_TIEN(refund.tienHoanCombo)}</span>
+                </div>` : ''}
+                ${restoreHtml}
+              </div>
+
+              <!-- Loss Info (only for penalty) -->
+              ${lossHtml}
+
+              <!-- Total Refund -->
+              <div class="cancel-refund-total">
+                <span class="total-label">Tổng hoàn tiền</span>
+                <span class="total-value">${FORMAT_TIEN(refund.tongHoan)}</span>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="cancel-payment-method">
+                💳 Hoàn về: <strong>${ptttName}</strong> (3-5 ngày làm việc)
+              </div>
+
+              <!-- Agree Checkbox -->
+              <div class="cancel-agree" onclick="document.getElementById('agreeCancel').click()">
+                <input type="checkbox" id="agreeCancel" onclick="event.stopPropagation(); toggleCancelBtn()">
+                <label for="agreeCancel" onclick="event.stopPropagation()">Tôi đã đọc và đồng ý với chính sách hủy vé. Tôi hiểu rằng việc hủy vé là không thể hoàn tác.</label>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="cancel-actions">
+                <button class="btn btn-outline" onclick="closeCancelModal()">Đóng</button>
+                <button class="btn-danger" id="confirmCancelBtn" disabled onclick="xacNhanHuyVe(${datVeId})">
+                  🚫 Xác nhận hủy vé
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('cancelModalContainer').innerHTML = modalHtml;
+      // Store refund info
+      window._currentRefund = refund;
+    }
+
+    function toggleCancelBtn() {
+      const agreed = document.getElementById('agreeCancel').checked;
+      document.getElementById('confirmCancelBtn').disabled = !agreed;
+    }
+
+    function closeCancelModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('cancelModalContainer').innerHTML = '';
+      window._currentRefund = null;
+    }
+
+    // =====================================================
+    // EXECUTE CANCEL
+    // =====================================================
+    async function xacNhanHuyVe(datVeId) {
+      const btn = document.getElementById('confirmCancelBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang xử lý...';
+
+      try {
+        const datVe = window._bookings[datVeId];
+        const refund = window._currentRefund;
+        if (!datVe || !refund) throw new Error('Dữ liệu không hợp lệ');
+
+        const user = Auth.getUser();
+
+        // 1. Update dat_ve → da_huy + save refund info
+        const { error: updateErr } = await db.from('dat_ve').update({
+          trang_thai: 'da_huy',
+          huy_luc: new Date().toISOString(),
+          phi_huy: refund.phiHuy,
+          tien_hoan: refund.tongHoan,
+          loai_huy: refund.loaiHuy
+        }).eq('id', datVeId);
+        if (updateErr) throw updateErr;
+
+        // 2. Xóa chi_tiet_ve → giải phóng ghế
+        await db.from('chi_tiet_ve').delete().eq('dat_ve_id', datVeId);
+
+        // 3. Xóa chi_tiet_combo
+        await db.from('chi_tiet_combo').delete().eq('dat_ve_id', datVeId);
+
+        // 4. Khôi phục voucher (chỉ khi hủy sớm - hoàn 100%)
+        if (refund.hoanVoucher && refund.voucherCode) {
+          await db.from('voucher').update({ da_su_dung: false }).eq('ma_code', refund.voucherCode);
+        }
+
+        // 5. Xử lý điểm thưởng
+        let diemThayDoi = 0;
+        if (refund.loaiHuy === 'hoan_100') {
+          // a. Trả lại điểm đã dùng giảm giá (nếu giảm giá từ điểm)
+          if (refund.giamGia > 0 && !refund.voucherCode) {
+            const diemDaDung = Math.floor(refund.giamGia / 100); // 1 điểm = 100đ
+            diemThayDoi += diemDaDung;
+          }
+          // b. Trừ điểm đã tích từ đơn hàng
+          const diemDaTich = Math.floor(datVe.tong_tien / 10000);
+          diemThayDoi -= diemDaTich;
+        } else {
+          // Phạt 30%: không hoàn điểm dùng, không trừ điểm tích
+          // → diemThayDoi = 0
+        }
+
+        if (diemThayDoi !== 0) {
+          const newPoints = Math.max(0, (user.diem_thuong || 0) + diemThayDoi);
+          await db.from('nguoi_dung').update({ diem_thuong: newPoints }).eq('id', user.id);
+          user.diem_thuong = newPoints;
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+
+        // 6. Close modal & show success
+        closeCancelModal();
+        showToast('✅ Hủy vé thành công! Tiền sẽ được hoàn lại trong 3-5 ngày làm việc.', 'success');
+
+        // 7. Reload history
+        await loadHistory();
+
+      } catch (err) {
+        console.error('Lỗi hủy vé:', err);
+        showToast('❌ Lỗi khi hủy vé: ' + (err.message || 'Không xác định'), 'error');
+        btn.disabled = false;
+        btn.textContent = '🚫 Xác nhận hủy vé';
+      }
+    }
+
+    // =====================================================
+    // SHOW QR CODE
+    // =====================================================
     function showQR(code) {
       const info = window._qrData && window._qrData[code] ? window._qrData[code] : { code: code };
-      
+
       const qrText = `CINETICKET|${info.code}|${info.phim||''}|${info.rap||''}|${info.ngay||''}|${info.ghe||''}|${info.tong||0}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrText)}&bgcolor=ffffff&color=1a1a2e`;
 
